@@ -1,10 +1,12 @@
+/** @import { DialogCallback, DialogContent, DialogOptions } from './dialog.js'; */
+
 import Dialog from './dialog.js';
 
 /**
- * Render an alert Dialog.
- * @param {string|Node|Node[]|HTMLElement|DocumentFragment|NodeList|HTMLCollection|QuerySet} [content] The alert content.
- * @param {(() => void)} [callback] The callback to execute when the alert is closed.
- * @param {object} [options] Options for rendering the alert.
+ * Renders an alert Dialog.
+ * @param {DialogContent} [content] The alert content.
+ * @param {DialogCallback} [callback] The callback assigned to the default OK action.
+ * @param {DialogOptions} [options] Options that override the generated alert options.
  * @returns {Dialog} The alert Dialog.
  */
 export function alert(content = '', callback = () => { }, options = {}) {

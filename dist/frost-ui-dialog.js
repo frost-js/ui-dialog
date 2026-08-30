@@ -34,45 +34,178 @@ Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 _fr0st_query = __toESM(_fr0st_query, 1);
 
 //#region src/dialog.js
-/**
-	* Dialog Class
-	* @class
+/** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
+	/**
+	* @typedef {NodeInput} DialogContent
+	*/
+	/**
+	* @typedef {'sm'|'lg'|'xl'} DialogSize
+	*/
+	/**
+	* @callback DialogCallback
+	* @returns {void} Nothing.
+	*/
+	/**
+	* @callback ConfirmCallback
+	* @param {boolean} result Whether the confirm action was selected.
+	* @returns {void} Nothing.
+	*/
+	/**
+	* @typedef {object} DialogButton
+	* @property {string} text The button text.
+	* @property {string|string[]} [style] The button style classes.
+	* @property {DialogCallback} [callback] The callback to execute when the button is selected.
+	*/
+	/**
+	* @typedef {object} DialogOptions
+	* @property {DialogContent} [content=''] The dialog content. Strings are rendered as text.
+	* @property {string|null} [title=null] The dialog title.
+	* @property {DialogButton[]} [buttons=[]] The dialog action buttons.
+	* @property {DialogSize|null} [size=null] The dialog size.
+	* @property {boolean|'static'} [backdrop='static'] Whether to show a dismissible or static backdrop.
+	* @property {boolean} [centerVertical=false] Whether to center the dialog vertically.
+	* @property {boolean} [closeBtn=true] Whether to show a close button.
+	* @property {NodeInput|null} [appendTo=null] The target to append the dialog to.
+	* @property {string} [ariaLabel='Dialog'] The accessible label used when there is no title.
+	*/
+	/**
+	* Creates and controls a programmatic Frost UI modal dialog.
 	*/
 	var Dialog = class {
+		/** @type {Modal|null} */
+		#modal;
+		/** @type {HTMLElement|null} */
+		#node;
+		/** @type {Readonly<DialogOptions>|null} */
+		#options;
 		/**
-		* New Dialog constructor.
-		* @param {object} [options] The options to create the Dialog with.
+		* Creates a Dialog.
+		* @param {DialogOptions} [options] The Dialog options.
 		*/
 		constructor(options = {}) {
-			this._options = _fr0st_query.default._extend({}, this.constructor.defaults, options);
-			this._render();
-			if (this._options.appendTo) _fr0st_query.default.append(this._options.appendTo, this._node);
-			else _fr0st_query.default.append(document.body, this._node);
-			this._modal = _fr0st_ui.Modal.init(this._node, {
-				backdrop: this._options.backdrop,
+			this.#options = Object.freeze(_fr0st_query.default._extend({}, this.constructor.defaults, options));
+			this.#render();
+			if (this.#options.appendTo) _fr0st_query.default.append(this.#options.appendTo, this.#node);
+			else _fr0st_query.default.append(document.body, this.#node);
+			this.#modal = _fr0st_ui.Modal.init(this.#node, {
+				backdrop: this.#options.backdrop,
 				show: true
 			});
-			_fr0st_query.default.addEventOnce(this._node, "hidden.ui.modal", () => {
-				_fr0st_query.default.remove(this._node);
-				this._node = null;
-				this._modal = null;
+			_fr0st_query.default.addEventOnce(this.#node, "hidden.ui.modal", () => {
+				_fr0st_query.default.remove(this.#node);
+				this.#modal = null;
+				this.#node = null;
+				this.#options = null;
 			});
 		}
 		/**
-		* Close the Dialog.
+		* Gets the dialog node.
+		* @returns {HTMLElement|null} The dialog node, or `null` after it is hidden.
+		*/
+		get node() {
+			return this.#node;
+		}
+		/**
+		* Gets the resolved dialog options.
+		* @returns {Readonly<DialogOptions>|null} The options, or `null` after the dialog is hidden.
+		*/
+		get options() {
+			return this.#options;
+		}
+		/**
+		* Closes the Dialog.
 		*/
 		close() {
-			this._modal.hide();
+			this.#modal.hide();
+		}
+		/**
+		* Renders the Dialog.
+		*/
+		#render() {
+			const titleId = this.#options.title ? (0, _fr0st_ui.generateId)("ui-dialog-title-") : null;
+			const modalAttributes = {
+				"aria-hidden": true,
+				"role": "dialog",
+				"tabindex": -1
+			};
+			if (titleId) modalAttributes["aria-labelledby"] = titleId;
+			else modalAttributes["aria-label"] = this.#options.ariaLabel;
+			this.#node = _fr0st_query.default.create("div", {
+				class: this.constructor.classes.modal,
+				attributes: modalAttributes
+			});
+			const modalDialog = _fr0st_query.default.create("div", { class: this.constructor.classes.modalDialog });
+			switch (this.#options.size) {
+				case "sm":
+					_fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalSm);
+					break;
+				case "lg":
+					_fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalLg);
+					break;
+				case "xl": _fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalXl);
+			}
+			if (this.#options.centerVertical) _fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalDialogCentered);
+			_fr0st_query.default.append(this.#node, modalDialog);
+			const modalContent = _fr0st_query.default.create("div", { class: this.constructor.classes.modalContent });
+			_fr0st_query.default.append(modalDialog, modalContent);
+			if (this.#options.title || this.#options.closeBtn) {
+				const modalHeader = _fr0st_query.default.create("div", { class: this.constructor.classes.modalHeader });
+				_fr0st_query.default.append(modalContent, modalHeader);
+				if (this.#options.title) {
+					const modalTitle = _fr0st_query.default.create("h2", {
+						class: this.constructor.classes.modalTitle,
+						text: this.#options.title,
+						attributes: { id: titleId }
+					});
+					_fr0st_query.default.append(modalHeader, modalTitle);
+				}
+				if (this.#options.closeBtn) {
+					const closeBtn = _fr0st_query.default.create("button", {
+						class: this.constructor.classes.btnClose,
+						attributes: {
+							"type": "button",
+							"aria-label": this.constructor.lang.close
+						}
+					});
+					_fr0st_query.default.addEvent(closeBtn, "click.ui.dialog", () => {
+						this.close();
+					});
+					_fr0st_query.default.append(modalHeader, closeBtn);
+				}
+			}
+			if (this.#options.content) {
+				const modalBody = _fr0st_query.default.create("div", { class: this.constructor.classes.modalBody });
+				if (_fr0st_query.default._isString(this.#options.content)) _fr0st_query.default.setText(modalBody, this.#options.content);
+				else _fr0st_query.default.append(modalBody, this.#options.content);
+				_fr0st_query.default.append(modalContent, modalBody);
+			}
+			if (this.#options.buttons.length) {
+				const modalFooter = _fr0st_query.default.create("div", { class: this.constructor.classes.modalFooter });
+				_fr0st_query.default.append(modalContent, modalFooter);
+				for (const buttonData of this.#options.buttons) {
+					const button = _fr0st_query.default.create("button", {
+						class: [this.constructor.classes.btn, buttonData.style],
+						text: buttonData.text,
+						attributes: { type: "button" }
+					});
+					_fr0st_query.default.addEvent(button, "click.ui.dialog", () => {
+						if (buttonData.callback) buttonData.callback();
+						this.close();
+					});
+					_fr0st_query.default.append(modalFooter, button);
+				}
+			}
 		}
 	};
 
 //#endregion
 //#region src/alert.js
-/**
-	* Render an alert Dialog.
-	* @param {string|Node|Node[]|HTMLElement|DocumentFragment|NodeList|HTMLCollection|QuerySet} [content] The alert content.
-	* @param {(() => void)} [callback] The callback to execute when the alert is closed.
-	* @param {object} [options] Options for rendering the alert.
+/** @import { DialogCallback, DialogContent, DialogOptions } from './dialog.js'; */
+	/**
+	* Renders an alert Dialog.
+	* @param {DialogContent} [content] The alert content.
+	* @param {DialogCallback} [callback] The callback assigned to the default OK action.
+	* @param {DialogOptions} [options] Options that override the generated alert options.
 	* @returns {Dialog} The alert Dialog.
 	*/
 	function alert(content = "", callback = () => {}, options = {}) {
@@ -89,11 +222,12 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 
 //#endregion
 //#region src/confirm.js
-/**
-	* Render a confirm Dialog.
-	* @param {string|Node|Node[]|HTMLElement|DocumentFragment|NodeList|HTMLCollection|QuerySet} [content] The confirm dialog content.
-	* @param {((result: boolean) => void)} [callback] The callback to execute when the confirm dialog is closed.
-	* @param {object} [options] Options for rendering the alert.
+/** @import { ConfirmCallback, DialogContent, DialogOptions } from './dialog.js'; */
+	/**
+	* Renders a confirm Dialog.
+	* @param {DialogContent} [content] The confirm dialog content.
+	* @param {ConfirmCallback} [callback] The callback assigned to the default Cancel and OK actions.
+	* @param {DialogOptions} [options] Options that override the generated confirm options.
 	* @returns {Dialog} The confirm Dialog.
 	*/
 	function confirm(content = "", callback = () => {}, options = {}) {
@@ -113,81 +247,8 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 	}
 
 //#endregion
-//#region src/prototype/render.js
-/**
-	* Render the Modal.
-	*/
-	function _render() {
-		this._node = _fr0st_query.default.create("div", {
-			class: this.constructor.classes.modal,
-			attributes: {
-				"tabindex": -1,
-				"role": "dialog",
-				"aria-modal": true
-			}
-		});
-		const modalDialog = _fr0st_query.default.create("div", { class: this.constructor.classes.modalDialog });
-		switch (this._options.size) {
-			case "sm":
-				_fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalSm);
-				break;
-			case "lg":
-				_fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalLg);
-				break;
-			case "xl": _fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalXl);
-		}
-		if (this._options.centerVertical) _fr0st_query.default.addClass(modalDialog, this.constructor.classes.modalDialogCentered);
-		_fr0st_query.default.append(this._node, modalDialog);
-		const modalContent = _fr0st_query.default.create("div", { class: this.constructor.classes.modalContent });
-		_fr0st_query.default.append(modalDialog, modalContent);
-		if (this._options.title || this._options.closeBtn) {
-			const modalHeader = _fr0st_query.default.create("div", { class: this.constructor.classes.modalHeader });
-			_fr0st_query.default.append(modalContent, modalHeader);
-			const modalTitle = _fr0st_query.default.create("h6", {
-				class: this.constructor.classes.modalTitle,
-				text: this._options.title
-			});
-			_fr0st_query.default.append(modalHeader, modalTitle);
-			if (this._options.closeBtn) {
-				const closeBtn = _fr0st_query.default.create("button", {
-					class: this.constructor.classes.btnClose,
-					attributes: {
-						"type": "button",
-						"aria-label": this.constructor.lang.close
-					}
-				});
-				_fr0st_query.default.addEvent(closeBtn, "click.ui.dialog", () => {
-					this.close();
-				});
-				_fr0st_query.default.append(modalHeader, closeBtn);
-			}
-		}
-		if (this._options.content) {
-			const modalBody = _fr0st_query.default.create("div", { class: this.constructor.classes.modalBody });
-			if (_fr0st_query.default._isString(this._options.content)) _fr0st_query.default.setText(modalBody, this._options.content);
-			else _fr0st_query.default.append(modalBody, this._options.content);
-			_fr0st_query.default.append(modalContent, modalBody);
-		}
-		if (this._options.buttons.length) {
-			const modalFooter = _fr0st_query.default.create("div", { class: this.constructor.classes.modalFooter });
-			_fr0st_query.default.append(modalContent, modalFooter);
-			for (const buttonData of this._options.buttons) {
-				const button = _fr0st_query.default.create("button", {
-					class: [this.constructor.classes.btn, buttonData.style],
-					text: buttonData.text,
-					attributes: { type: "button" }
-				});
-				_fr0st_query.default.addEvent(button, "click.ui.dialog", () => {
-					if (buttonData.callback) buttonData.callback();
-					this.close();
-				});
-				_fr0st_query.default.append(modalFooter, button);
-			}
-		}
-	}
-
-//#endregion
 //#region src/index.js
+/** @type {DialogOptions} */
 	Dialog.defaults = {
 		content: "",
 		title: null,
@@ -196,10 +257,11 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		backdrop: "static",
 		centerVertical: false,
 		closeBtn: true,
-		appendTo: null
+		appendTo: null,
+		ariaLabel: "Dialog"
 	};
 	Dialog.classes = {
-		btn: "btn ripple mb-0",
+		btn: "btn ripple",
 		btnClose: "btn-close",
 		btnPrimary: "btn-primary",
 		btnSecondary: "btn-secondary",
@@ -220,8 +282,6 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		close: "Close",
 		ok: "OK"
 	};
-	var proto = Dialog.prototype;
-	proto._render = _render;
 
 //#endregion
 exports.Dialog = Dialog;

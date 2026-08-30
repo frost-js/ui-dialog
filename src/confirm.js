@@ -1,10 +1,12 @@
+/** @import { ConfirmCallback, DialogContent, DialogOptions } from './dialog.js'; */
+
 import Dialog from './dialog.js';
 
 /**
- * Render a confirm Dialog.
- * @param {string|Node|Node[]|HTMLElement|DocumentFragment|NodeList|HTMLCollection|QuerySet} [content] The confirm dialog content.
- * @param {((result: boolean) => void)} [callback] The callback to execute when the confirm dialog is closed.
- * @param {object} [options] Options for rendering the alert.
+ * Renders a confirm Dialog.
+ * @param {DialogContent} [content] The confirm dialog content.
+ * @param {ConfirmCallback} [callback] The callback assigned to the default Cancel and OK actions.
+ * @param {DialogOptions} [options] Options that override the generated confirm options.
  * @returns {Dialog} The confirm Dialog.
  */
 export function confirm(content = '', callback = () => { }, options = {}) {

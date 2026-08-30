@@ -1,9 +1,10 @@
+/** @import { DialogOptions } from './dialog.js'; */
+
 import { alert } from './alert.js';
 import { confirm } from './confirm.js';
 import Dialog from './dialog.js';
-import { _render } from './prototype/render.js';
 
-// Dialog default options
+/** @type {DialogOptions} */
 Dialog.defaults = {
     content: '',
     title: null,
@@ -13,11 +14,11 @@ Dialog.defaults = {
     centerVertical: false,
     closeBtn: true,
     appendTo: null,
+    ariaLabel: 'Dialog',
 };
 
-// Dialog classes
 Dialog.classes = {
-    btn: 'btn ripple mb-0',
+    btn: 'btn ripple',
     btnClose: 'btn-close',
     btnPrimary: 'btn-primary',
     btnSecondary: 'btn-secondary',
@@ -34,17 +35,11 @@ Dialog.classes = {
     modalXl: 'modal-xl',
 };
 
-// Dialog language
 Dialog.lang = {
     cancel: 'Cancel',
     close: 'Close',
     ok: 'OK',
 };
-
-// Dialog prototype
-const proto = Dialog.prototype;
-
-proto._render = _render;
 
 export {
     alert,
