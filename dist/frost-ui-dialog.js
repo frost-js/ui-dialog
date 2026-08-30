@@ -116,7 +116,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		* Closes the Dialog.
 		*/
 		close() {
-			this.#modal.hide();
+			this.#modal?.hide();
 		}
 		/**
 		* Renders the Dialog.
@@ -184,7 +184,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 				_fr0st_query.default.append(modalContent, modalFooter);
 				for (const buttonData of this.#options.buttons) {
 					const button = _fr0st_query.default.create("button", {
-						class: [this.constructor.classes.btn, buttonData.style],
+						class: [this.constructor.classes.btn, buttonData.style].filter(Boolean),
 						text: buttonData.text,
 						attributes: { type: "button" }
 					});

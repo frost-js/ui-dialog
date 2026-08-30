@@ -84,7 +84,7 @@ var Dialog = class {
 	* Closes the Dialog.
 	*/
 	close() {
-		this.#modal.hide();
+		this.#modal?.hide();
 	}
 	/**
 	* Renders the Dialog.
@@ -152,7 +152,7 @@ var Dialog = class {
 			$.append(modalContent, modalFooter);
 			for (const buttonData of this.#options.buttons) {
 				const button = $.create("button", {
-					class: [this.constructor.classes.btn, buttonData.style],
+					class: [this.constructor.classes.btn, buttonData.style].filter(Boolean),
 					text: buttonData.text,
 					attributes: { type: "button" }
 				});
