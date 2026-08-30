@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Frost UI Dialog Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fr0st/ui@latest/dist/frost-ui.min.css">
+    <link rel="stylesheet" href="assets/demo.css">
+    <script src="https://cdn.jsdelivr.net/npm/@fr0st/ui@latest/dist/frost-ui-bundle.min.js"></script>
+    <script src="../dist/frost-ui-dialog.js"></script>
+    <script src="assets/demo.js"></script>
+</head>
+
+<body>
+    <header class="navbar bg-glass sticky-top border-bottom">
+        <div class="container d-flex align-items-center justify-content-between gap-3">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="#top">
+                <span class="badge bg-primary bg-gradient shadow-glow fs-5" aria-hidden="true">F</span>
+                <span>Dialog</span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold mb-0" for="demo-theme">Theme</label>
+                <select class="input-outline input-sm w-auto rounded-pill" id="demo-theme" data-demo-theme>
+                    <option value="system">System</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-4 py-lg-5" id="top">
+        <section class="card border-0 overflow-hidden shadow-lg mb-5">
+            <div class="row g-0 align-items-stretch">
+                <div class="col-lg-7 d-flex align-items-center bg-ambient">
+                    <div class="p-4 p-md-5">
+                        <span class="badge bg-primary-subtle text-primary-subtle mb-3">Frost UI v3 component</span>
+                        <h1 class="display-2 mb-4">Dialogs for <span class="text-gradient">decisive moments.</span></h1>
+                        <p class="lead text-body-secondary mb-4">Try alerts, confirmations, custom actions, rich DOM content, modal sizes, backdrops, append targets, and stacked dialogs.</p>
+                        <nav class="d-flex flex-wrap gap-2" aria-label="Demo sections">
+                            <button class="btn btn-primary ripple" data-demo-action="alert" type="button">Show alert</button>
+                            <button class="btn btn-secondary ripple" data-demo-action="confirm" type="button">Ask for confirmation</button>
+                            <a class="btn btn-outline-primary ripple" href="#custom">Explore options</a>
+                        </nav>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-flex align-items-center bg-glass border-start">
+                    <div class="p-4 p-md-5 w-100">
+                        <small class="text-body-secondary d-block mb-2">Live callback output</small>
+                        <div class="alert alert-info demo-output mb-0" role="status" aria-live="polite">
+                            <strong class="d-block mb-2">Latest result</strong>
+                            <output id="callback-output">Ready. Select a demo action.</output>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-5" id="helpers">
+            <header class="border-bottom pb-3 mb-4">
+                <span class="text-primary fw-bold">Convenience helpers</span>
+                <h2 class="h3 mb-1">Alert and confirm</h2>
+                <p class="text-body-secondary mb-0">Callbacks run only when an action button is selected. Closing a dialog another way leaves the output unchanged.</p>
+            </header>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card card-body h-100 p-4">
+                        <span class="badge bg-primary-subtle text-primary-subtle align-self-start mb-3">One action</span>
+                        <h3 class="h5">Alert</h3>
+                        <p class="text-body-secondary">Present a message with one primary OK action.</p>
+                        <button class="btn btn-primary ripple mt-auto align-self-start" data-demo-action="alert" type="button">Show alert</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-body h-100 p-4">
+                        <span class="badge bg-accent-subtle text-accent-subtle align-self-start mb-3">Boolean result</span>
+                        <h3 class="h5">Confirm</h3>
+                        <p class="text-body-secondary">Cancel reports <code>false</code>; OK reports <code>true</code>.</p>
+                        <button class="btn btn-accent ripple mt-auto align-self-start" data-demo-action="confirm" type="button">Show confirm</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-5" id="custom">
+            <header class="border-bottom pb-3 mb-4">
+                <span class="text-accent fw-bold">Custom content and actions</span>
+                <h2 class="h3 mb-1">Build a dialog around the task</h2>
+                <p class="text-body-secondary mb-0">Strings remain text-only. Trusted rich content is supplied as DOM nodes, and custom action callbacks report below.</p>
+            </header>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card card-body h-100 p-4">
+                        <h3 class="h5">Custom actions</h3>
+                        <p class="text-body-secondary">Configure labels, button classes, and callbacks.</p>
+                        <button class="btn btn-primary ripple mt-auto align-self-start" data-demo-action="custom" type="button">Choose an action</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-body h-100 p-4">
+                        <h3 class="h5">HTML nodes</h3>
+                        <p class="text-body-secondary">The example creates elements with fQuery and appends them without parsing an HTML string.</p>
+                        <button class="btn btn-secondary ripple mt-auto align-self-start" data-demo-action="nodes" type="button">Show DOM content</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-5" id="behavior">
+            <header class="border-bottom pb-3 mb-4">
+                <span class="text-success fw-bold">Modal behavior</span>
+                <h2 class="h3 mb-1">Backdrops and positioning</h2>
+                <p class="text-body-secondary mb-0">Compare the default static backdrop, click-to-dismiss behavior, no backdrop, and vertical centering.</p>
+            </header>
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-primary ripple" data-demo-action="backdrop-static" type="button">Static backdrop</button>
+                        <button class="btn btn-outline-success ripple" data-demo-action="backdrop-dismiss" type="button">Dismissible backdrop</button>
+                        <button class="btn btn-outline-secondary ripple" data-demo-action="backdrop-none" type="button">No backdrop</button>
+                        <button class="btn btn-outline-accent ripple" data-demo-action="centered" type="button">Centered dialog</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-5" id="sizes">
+            <header class="border-bottom pb-3 mb-4">
+                <span class="text-primary fw-bold">Responsive layout</span>
+                <h2 class="h3 mb-1">Dialog sizes</h2>
+                <p class="text-body-secondary mb-0">Use Frost UI's small, large, and extra-large modal widths.</p>
+            </header>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <button class="btn btn-outline-secondary ripple w-100" data-demo-action="size-sm" type="button">Small <code>sm</code></button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary ripple w-100" data-demo-action="size-lg" type="button">Large <code>lg</code></button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-accent ripple w-100" data-demo-action="size-xl" type="button">Extra large <code>xl</code></button>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-5" id="advanced">
+            <header class="border-bottom pb-3 mb-4">
+                <span class="text-accent fw-bold">Advanced composition</span>
+                <h2 class="h3 mb-1">Append targets and stacks</h2>
+                <p class="text-body-secondary mb-0">Choose where the modal node is inserted, or open another dialog without closing the active layer.</p>
+            </header>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body p-4">
+                            <h3 class="h5">Custom append target</h3>
+                            <p class="text-body-secondary">The generated modal becomes a child of <code>#dialog-host</code>.</p>
+                            <button class="btn btn-primary ripple mb-4" data-demo-action="append" type="button">Append a dialog here</button>
+                            <div class="demo-append-target rounded-3 p-4 text-center text-body-secondary" id="dialog-host">
+                                <span class="small">Custom append target</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card card-body h-100 p-4 bg-ambient">
+                        <span class="badge bg-accent-subtle text-accent-subtle align-self-start mb-3">Focus-aware layers</span>
+                        <h3 class="h5">Stacked dialogs</h3>
+                        <p class="text-body-secondary">The first dialog contains a normal content button that opens a second layer without triggering the first dialog's close lifecycle.</p>
+                        <button class="btn btn-accent ripple mt-auto align-self-start" data-demo-action="stack" type="button">Start a dialog stack</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-top bg-glass">
+        <div class="container py-4 d-flex flex-wrap justify-content-between gap-2">
+            <span class="text-body-secondary">Frost UI Dialog</span>
+            <a href="https://github.com/frost-js/ui-dialog">View the repository</a>
+        </div>
+    </footer>
+</body>
+
+</html>

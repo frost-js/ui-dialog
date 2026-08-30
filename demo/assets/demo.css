@@ -1,0 +1,8 @@
+.demo-output {
+    min-height: 7rem;
+}
+
+.demo-append-target {
+    border: 2px dashed currentColor;
+    min-height: 8rem;
+}
