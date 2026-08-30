@@ -330,42 +330,15 @@ Because `show.ui.modal` is triggered during construction, attach document-level 
 - Generated close and action controls are native buttons. The close button uses `Dialog.lang.close` as its accessible label.
 - Keep titles and button labels concise, and provide clear instructions or error text in the content when the action has consequences.
 
-## Browser support
-
-Dialog targets the Baseline Newly Available browser set declared by the package and is tested with current Playwright Chromium, Firefox, and WebKit engines. It relies on modern JavaScript private fields, ESM, DOM APIs, and Frost UI v3.
-
-The UMD build supports direct script loading but does not make legacy browsers compatible with those runtime requirements. Dialog is a client-side component and is not intended to render in a Node.js process without a configured browser DOM.
-
 ## Development
 
 ```bash
 npm test
 npm run lint
 npm run build
-npm run test:browser
-npm run test:coverage
 ```
 
-- `npm test` builds the bundles and runs the Playwright suite in Chromium, Firefox, and WebKit.
-- `npm run test:browser` runs the existing bundles across the configured browser matrix.
-- `npm run test:coverage` runs Chromium with source-mapped coverage and writes HTML and LCOV reports.
-- `npm run test:headed` and `npm run test:ui` provide interactive Playwright modes.
-
-## Migrating from v1 to v2
-
-- Upgrade peers to `@fr0st/ui@^3.0.0` and `@fr0st/query@^4.1.2`.
-- The package root now resolves to the compiled ESM bundle. Continue using named imports: `Dialog`, `alert`, and `confirm`.
-- Direct browser ESM loading requires import maps for `@fr0st/core`, `@fr0st/query`, and `@fr0st/ui`.
-- The UMD entry extends the existing `globalThis.UI` object and is published as `frost-ui-dialog.js` or `frost-ui-dialog.min.js`.
-- `_node`, `_modal`, and `_options` are no longer public implementation properties. Use the read-only `node` and `options` accessors; the Modal instance remains private.
-- Resolved options are frozen. Replace an option by passing it to a new Dialog rather than mutating `dialog.options`.
-- Rendering is private and no longer composed through `Dialog.prototype._render`.
-- Titles now render as `h2`, receive generated IDs, and provide the dialog's accessible name. Untitled dialogs use the new `ariaLabel` option.
-- Frost UI Modal owns `aria-hidden`, `aria-modal`, focus trapping, stacking, scroll locking, and asynchronous transition cleanup.
-- `close()` remains the public lifecycle method and is now safe after cleanup. Wait for `hidden.ui.modal` or for `dialog.node` to become `null` before assuming removal is complete.
-- Alert and confirm callbacks describe action selection: closing by another route does not call them.
-- The obsolete `mb-0` action-button utility was removed because UI v3 supplies modal-footer spacing.
-- Vite replaces Rollup/Terser and publishes ESM and UMD development/minified bundles with source maps.
+`npm test` builds the bundles and runs the Playwright suite in Chromium, Firefox, and WebKit.
 
 ## License
 

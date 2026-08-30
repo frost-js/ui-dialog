@@ -44,22 +44,17 @@ test.describe('Dialog', () => {
         });
 
         test('isolates resolved options from input and other dialogs', async ({ page }) => {
-            expect(await page.evaluate((_) => {
+            await page.evaluate((_) => {
                 const options = { title: 'First' };
-                const first = new UI.Dialog(options);
+                window.firstDialog = new UI.Dialog(options);
                 options.title = 'Changed';
-                const second = new UI.Dialog({ title: 'Second' });
-
-                return {
-                    different: first.options !== second.options,
-                    first: first.options.title,
-                    second: second.options.title,
-                };
-            })).toEqual({
-                different: true,
-                first: 'First',
-                second: 'Second',
+                window.secondDialog = new UI.Dialog({ title: 'Second' });
             });
+
+            await expect(page.locator('.modal-title')).toHaveText(['First', 'Second']);
+            expect(await page.evaluate((_) =>
+                window.firstDialog.options !== window.secondDialog.options,
+            )).toBe(true);
         });
 
         test('renders the dialog structure', async ({ page }) => {
@@ -87,40 +82,34 @@ test.describe('Dialog', () => {
         });
 
         test('starts hidden and allows Modal to manage ARIA state', async ({ page }) => {
-            expect(await page.evaluate((_) => {
+            const initialAriaState = await page.evaluate((_) => {
                 const dialog = new UI.Dialog({ title: 'Dialog title' });
                 return {
                     ariaHidden: $.getAttribute(dialog.node, 'aria-hidden'),
                     ariaModal: $.getAttribute(dialog.node, 'aria-modal'),
                 };
-            })).toEqual({
-                ariaHidden: 'true',
-                ariaModal: null,
             });
+
+            expect(initialAriaState.ariaHidden).toBe('true');
+            expect(initialAriaState.ariaModal).toBe(null);
 
             await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
             await expect(page.locator('.modal')).toHaveAttribute('aria-modal', 'true');
         });
 
         test('associates the title with the dialog', async ({ page }) => {
-            const result = await page.evaluate((_) => {
-                const dialog = new UI.Dialog({ title: 'Dialog title' });
-                const title = $.findOne('.modal-title', dialog.node);
-                return {
-                    label: $.getAttribute(dialog.node, 'aria-label'),
-                    labelledBy: $.getAttribute(dialog.node, 'aria-labelledby'),
-                    titleId: $.getAttribute(title, 'id'),
-                    titleTag: title.tagName,
-                };
+            await page.evaluate((_) => {
+                new UI.Dialog({ title: 'Dialog title' });
             });
 
-            expect(result).toEqual({
-                label: null,
-                labelledBy: result.titleId,
-                titleId: result.titleId,
-                titleTag: 'H2',
-            });
-            expect(result.titleId).toMatch(/^ui-dialog-title-/);
+            const modal = page.locator('.modal');
+            const title = modal.locator('.modal-title');
+            await expect(modal).not.toHaveAttribute('aria-label');
+            await expect(title).toHaveAttribute('id', /^ui-dialog-title-/);
+            await expect(title).toHaveJSProperty('tagName', 'H2');
+
+            const titleId = await title.getAttribute('id');
+            await expect(modal).toHaveAttribute('aria-labelledby', titleId);
         });
     });
 
@@ -187,13 +176,8 @@ test.describe('Dialog', () => {
             });
             await expect(page.locator('.modal')).toHaveCount(0);
 
-            expect(await page.evaluate((_) => ({
-                node: window.dialog.node,
-                options: window.dialog.options,
-            }))).toEqual({
-                node: null,
-                options: null,
-            });
+            expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+            expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
         });
     });
 
@@ -208,21 +192,28 @@ test.describe('Dialog', () => {
         });
 
         test('appends DOM content', async ({ page }) => {
-            expect(await page.evaluate((_) => {
-                const content = $.create('span', { text: 'DOM content' });
-                const dialog = new UI.Dialog({ content });
-                return $.findOne('.modal-body span', dialog.node) === content;
-            })).toBe(true);
+            await page.evaluate((_) => {
+                const content = $.create('span', {
+                    attributes: { id: 'dialog-content' },
+                    text: 'DOM content',
+                });
+                new UI.Dialog({ content });
+            });
+
+            await expect(page.locator('.modal-body > #dialog-content'))
+                .toHaveText('DOM content');
         });
 
         test('appends QuerySet content', async ({ page }) => {
-            expect(await page.evaluate((_) => {
+            await page.evaluate((_) => {
                 const first = $.create('span', { text: 'First' });
                 const second = $.create('span', { text: 'Second' });
-                const dialog = new UI.Dialog({ content: $([first, second]) });
-                const children = $.find('.modal-body span', dialog.node);
-                return children[0] === first && children[1] === second;
-            })).toBe(true);
+                new UI.Dialog({ content: $([first, second]) });
+            });
+
+            const content = page.locator('.modal-body > span');
+            await expect(content).toHaveCount(2);
+            await expect(content).toHaveText(['First', 'Second']);
         });
 
         test('does not render an empty body', async ({ page }) => {
@@ -355,10 +346,15 @@ test.describe('Dialog', () => {
 
     test.describe('size option', () => {
         test('renders supported dialog sizes', async ({ page }) => {
-            expect(await page.evaluate((_) => ['sm', 'lg', 'xl'].map((size) => {
-                const dialog = new UI.Dialog({ size });
-                return $.getAttribute($.findOne('.modal-dialog', dialog.node), 'class');
-            }))).toEqual([
+            await page.evaluate((_) => {
+                for (const size of ['sm', 'lg', 'xl']) {
+                    new UI.Dialog({ size });
+                }
+            });
+
+            const dialogs = page.locator('.modal-dialog');
+            await expect(dialogs).toHaveCount(3);
+            await expect(dialogs).toHaveClass([
                 'modal-dialog modal-sm',
                 'modal-dialog modal-lg',
                 'modal-dialog modal-xl',
@@ -386,18 +382,20 @@ test.describe('Dialog', () => {
 
     test.describe('appendTo option', () => {
         test('appends to the document body by default', async ({ page }) => {
-            expect(await page.evaluate((_) => {
-                const dialog = new UI.Dialog();
-                return dialog.node.parentElement === document.body;
-            })).toBe(true);
+            await page.evaluate((_) => {
+                new UI.Dialog();
+            });
+
+            await expect(page.locator('body > .modal')).toHaveCount(1);
         });
 
         test('appends to a custom QuerySet target', async ({ page }) => {
-            expect(await page.evaluate((_) => {
+            await page.evaluate((_) => {
                 $.setHTML(document.body, '<section id="dialog-host"></section>');
-                const dialog = new UI.Dialog({ appendTo: $('#dialog-host') });
-                return dialog.node.parentElement === $.findOne('#dialog-host');
-            })).toBe(true);
+                new UI.Dialog({ appendTo: $('#dialog-host') });
+            });
+
+            await expect(page.locator('#dialog-host > .modal')).toHaveCount(1);
         });
     });
 
@@ -478,15 +476,15 @@ test.describe('Dialog', () => {
             });
             await expect(page.locator('.modal')).toHaveCount(0);
 
-            expect(await page.evaluate((_) => ({
-                ariaHidden: $.getAttribute(window.dialogNode, 'aria-hidden'),
-                ariaModal: $.getAttribute(window.dialogNode, 'aria-modal'),
-                connected: $.isConnected(window.dialogNode),
-            }))).toEqual({
-                ariaHidden: 'true',
-                ariaModal: 'false',
-                connected: false,
-            });
+            expect(await page.evaluate((_) =>
+                $.getAttribute(window.dialogNode, 'aria-hidden'),
+            )).toBe('true');
+            expect(await page.evaluate((_) =>
+                $.getAttribute(window.dialogNode, 'aria-modal'),
+            )).toBe('false');
+            expect(await page.evaluate((_) =>
+                $.isConnected(window.dialogNode),
+            )).toBe(false);
         });
     });
 
