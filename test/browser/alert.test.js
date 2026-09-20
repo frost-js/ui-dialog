@@ -11,6 +11,17 @@ test.describe('alert', () => {
         await expect(page.locator('.modal-footer button')).toHaveClass(/\bbtn-primary\b/);
     });
 
+    test('supports default arguments', async ({ page }) => {
+        await page.evaluate((_) => {
+            UI.alert();
+        });
+        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+        await page.getByRole('button', { name: 'OK' }).click();
+
+        await expect(page.locator('.modal')).toHaveCount(0);
+    });
+
     for (const { button, expected } of [
         { button: 'OK', expected: 1 },
         { button: 'Close', expected: 0 },
@@ -43,16 +54,5 @@ test.describe('alert', () => {
         await expect(page.locator('.modal-title')).toHaveText('Custom title');
         await expect(page.locator('.modal-body')).toHaveText('Custom content');
         await expect(page.locator('.modal-footer button')).toHaveText('Custom');
-    });
-
-    test('supports default arguments', async ({ page }) => {
-        await page.evaluate((_) => {
-            UI.alert();
-        });
-        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-        await page.getByRole('button', { name: 'OK' }).click();
-
-        await expect(page.locator('.modal')).toHaveCount(0);
     });
 });

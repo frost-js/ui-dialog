@@ -94,6 +94,27 @@ test.describe('Dialog', () => {
     });
 
     test.describe('#close', () => {
+        for (const { calls } of [{ calls: 1 }, { calls: 3 }]) {
+            test(`cleans up the dialog and public state with calls=${calls}`, async ({ page }) => {
+                await page.evaluate((_) => {
+                    window.dialog = new UI.Dialog();
+                });
+                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+                await page.evaluate((calls) => {
+                    for (let i = 0; i < calls; i++) {
+                        window.dialog.close();
+                    }
+                }, calls);
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+                expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+                expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
+            });
+        }
+
         for (const backdrop of ['static', false]) {
             test(`queues an immediate close with backdrop=${backdrop}`, async ({ page }) => {
                 await page.evaluate((backdrop) => {
@@ -112,27 +133,6 @@ test.describe('Dialog', () => {
                 expect(await page.evaluate((_) => window.dialogEvents)).toEqual([
                     'shown', 'hide', 'hidden',
                 ]);
-                expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
-                expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
-            });
-        }
-
-        for (const { calls } of [{ calls: 1 }, { calls: 3 }]) {
-            test(`cleans up the dialog and public state with calls=${calls}`, async ({ page }) => {
-                await page.evaluate((_) => {
-                    window.dialog = new UI.Dialog();
-                });
-                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-                await page.evaluate((calls) => {
-                    for (let i = 0; i < calls; i++) {
-                        window.dialog.close();
-                    }
-                }, calls);
-
-                await expect(page.locator('.modal')).toHaveCount(0);
-                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
-                await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
                 expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
                 expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
             });
@@ -257,6 +257,36 @@ test.describe('Dialog', () => {
     });
 
     test.describe('buttons option', () => {
+        test('renders custom buttons', async ({ page }) => {
+            await page.evaluate((_) => {
+                new UI.Dialog({
+                    buttons: [
+                        {
+                            style: ['btn-danger', 'custom-action'],
+                            text: 'Delete',
+                        },
+                        { text: 'Cancel' },
+                    ],
+                });
+            });
+
+            const buttons = page.locator('.modal-footer button');
+
+            await expect(buttons).toHaveCount(2);
+            await expect(buttons).toHaveText(['Delete', 'Cancel']);
+            await expect(buttons.first()).toHaveClass(/\bbtn-danger\b/);
+            await expect(buttons.first()).toHaveClass(/\bcustom-action\b/);
+            await expect(buttons.nth(1)).toHaveClass(/\bbtn\b/);
+        });
+
+        test('does not render an empty footer', async ({ page }) => {
+            await page.evaluate((_) => {
+                new UI.Dialog();
+            });
+
+            await expect(page.locator('.modal-footer')).toHaveCount(0);
+        });
+
         for (const { name, buttons, expected } of [
             { name: 'empty array', buttons: [], expected: [] },
             { name: 'custom array', buttons: [{ text: 'Custom' }], expected: ['Custom'] },
@@ -300,28 +330,6 @@ test.describe('Dialog', () => {
             });
         }
 
-        test('renders custom buttons', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({
-                    buttons: [
-                        {
-                            style: ['btn-danger', 'custom-action'],
-                            text: 'Delete',
-                        },
-                        { text: 'Cancel' },
-                    ],
-                });
-            });
-
-            const buttons = page.locator('.modal-footer button');
-
-            await expect(buttons).toHaveCount(2);
-            await expect(buttons).toHaveText(['Delete', 'Cancel']);
-            await expect(buttons.first()).toHaveClass(/\bbtn-danger\b/);
-            await expect(buttons.first()).toHaveClass(/\bcustom-action\b/);
-            await expect(buttons.nth(1)).toHaveClass(/\bbtn\b/);
-        });
-
         test('runs a custom callback and closes the Dialog', async ({ page }) => {
             await page.evaluate((_) => {
                 window.callbackCount = 0;
@@ -342,6 +350,17 @@ test.describe('Dialog', () => {
 
             await expect(page.locator('.modal')).toHaveCount(0);
             expect(await page.evaluate((_) => window.callbackCount)).toBe(1);
+        });
+
+        test('closes without a callback', async ({ page }) => {
+            await page.evaluate((_) => {
+                new UI.Dialog({ buttons: [{ text: 'Done' }] });
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.getByRole('button', { name: 'Done' }).click();
+
+            await expect(page.locator('.modal')).toHaveCount(0);
         });
 
         test('handles only the first action across repeated and different button clicks', async ({ page }) => {
@@ -391,25 +410,6 @@ test.describe('Dialog', () => {
             await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
             expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
             expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
-        });
-
-        test('closes without a callback', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ buttons: [{ text: 'Done' }] });
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.getByRole('button', { name: 'Done' }).click();
-
-            await expect(page.locator('.modal')).toHaveCount(0);
-        });
-
-        test('does not render an empty footer', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog();
-            });
-
-            await expect(page.locator('.modal-footer')).toHaveCount(0);
         });
     });
 
@@ -542,6 +542,18 @@ test.describe('Dialog', () => {
     });
 
     test.describe('focus management', () => {
+        test('prevents focus outside the Dialog', async ({ page }) => {
+            await page.evaluate((_) => {
+                document.body.innerHTML = '<button id="outside" type="button"></button>';
+                new UI.Dialog({ buttons: [{ text: 'Action' }] });
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.locator('#outside').focus();
+
+            await expect(page.locator('.btn-close')).toBeFocused();
+        });
+
         test('restores focus to the opener after closing', async ({ page }) => {
             await page.evaluate((_) => {
                 document.body.innerHTML = '<button id="opener" type="button">Open dialog</button>';
@@ -558,21 +570,36 @@ test.describe('Dialog', () => {
             await expect(page.locator('.modal')).toHaveCount(0);
             await expect(page.locator('#opener')).toBeFocused();
         });
-
-        test('prevents focus outside the Dialog', async ({ page }) => {
-            await page.evaluate((_) => {
-                document.body.innerHTML = '<button id="outside" type="button"></button>';
-                new UI.Dialog({ buttons: [{ text: 'Action' }] });
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.locator('#outside').focus();
-
-            await expect(page.locator('.btn-close')).toBeFocused();
-        });
     });
 
     test.describe('stacked dialogs', () => {
+        test('stacks Dialogs and reindexes after closing', async ({ page }) => {
+            await page.evaluate((_) => {
+                window.firstDialog = new UI.Dialog({ title: 'First' });
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.evaluate((_) => {
+                window.secondDialog = new UI.Dialog({ title: 'Second' });
+            });
+            await expect(page.locator('.modal').nth(1)).toHaveAttribute('aria-hidden', 'false');
+
+            await expect(page.locator('.modal')).toHaveCount(2);
+            await expect(page.locator('.modal').nth(0)).not.toHaveAttribute('style');
+            await expect(page.locator('.modal').nth(1)).toHaveAttribute('style', 'z-index: 1080;');
+            await expect(page.locator('.modal-backdrop')).toHaveCount(2);
+            await expect(page.locator('.modal-backdrop').nth(1)).toHaveAttribute('style', 'z-index: 1070;');
+
+            await page.evaluate((_) => {
+                window.secondDialog.close();
+            });
+
+            await expect(page.locator('.modal')).toHaveCount(1);
+            await expect(page.locator('.modal')).not.toHaveAttribute('style');
+            await expect(page.locator('.modal-backdrop')).toHaveCount(1);
+            await expect(page.locator('body')).toHaveClass(/\bmodal-open\b/);
+        });
+
         test('keeps the parent open when a nested dialog closes and still cleans up the parent', async ({ page }) => {
             await page.evaluate((_) => {
                 const host = document.createElement('div');
@@ -607,33 +634,6 @@ test.describe('Dialog', () => {
                 child: window.childDialog.node,
                 parent: window.parentDialog.node,
             }))).toEqual({ child: null, parent: null });
-        });
-
-        test('stacks Dialogs and reindexes after closing', async ({ page }) => {
-            await page.evaluate((_) => {
-                window.firstDialog = new UI.Dialog({ title: 'First' });
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.evaluate((_) => {
-                window.secondDialog = new UI.Dialog({ title: 'Second' });
-            });
-            await expect(page.locator('.modal').nth(1)).toHaveAttribute('aria-hidden', 'false');
-
-            await expect(page.locator('.modal')).toHaveCount(2);
-            await expect(page.locator('.modal').nth(0)).not.toHaveAttribute('style');
-            await expect(page.locator('.modal').nth(1)).toHaveAttribute('style', 'z-index: 1080;');
-            await expect(page.locator('.modal-backdrop')).toHaveCount(2);
-            await expect(page.locator('.modal-backdrop').nth(1)).toHaveAttribute('style', 'z-index: 1070;');
-
-            await page.evaluate((_) => {
-                window.secondDialog.close();
-            });
-
-            await expect(page.locator('.modal')).toHaveCount(1);
-            await expect(page.locator('.modal')).not.toHaveAttribute('style');
-            await expect(page.locator('.modal-backdrop')).toHaveCount(1);
-            await expect(page.locator('body')).toHaveClass(/\bmodal-open\b/);
         });
     });
 
