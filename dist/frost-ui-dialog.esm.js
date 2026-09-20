@@ -211,8 +211,11 @@ var Dialog = class {
 				$.addEvent(button, "click.ui.dialog", () => {
 					if (this.#actionSelected) return;
 					this.#actionSelected = true;
-					buttonData.callback?.();
-					this.close();
+					try {
+						buttonData.callback?.();
+					} finally {
+						this.close();
+					}
 				});
 				$.append(modalFooter, button);
 			}

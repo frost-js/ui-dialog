@@ -243,8 +243,11 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 					_fr0st_query.default.addEvent(button, "click.ui.dialog", () => {
 						if (this.#actionSelected) return;
 						this.#actionSelected = true;
-						buttonData.callback?.();
-						this.close();
+						try {
+							buttonData.callback?.();
+						} finally {
+							this.close();
+						}
 					});
 					_fr0st_query.default.append(modalFooter, button);
 				}

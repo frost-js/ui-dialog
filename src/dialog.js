@@ -295,8 +295,11 @@ export default class Dialog {
                     }
 
                     this.#actionSelected = true;
-                    buttonData.callback?.();
-                    this.close();
+                    try {
+                        buttonData.callback?.();
+                    } finally {
+                        this.close();
+                    }
                 });
 
                 $.append(modalFooter, button);
