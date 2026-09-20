@@ -11,35 +11,25 @@ test.describe('alert', () => {
         await expect(page.locator('.modal-footer button')).toHaveClass(/\bbtn-primary\b/);
     });
 
-    test('runs the callback when OK is selected', async ({ page }) => {
-        await page.evaluate((_) => {
-            window.callbackCount = 0;
-            UI.alert('Alert content', () => {
-                window.callbackCount++;
+    for (const { button, expected } of [
+        { button: 'OK', expected: 1 },
+        { button: 'Close', expected: 0 },
+    ]) {
+        test(`has callback count ${expected} after selecting ${button}`, async ({ page }) => {
+            await page.evaluate((_) => {
+                window.callbackCount = 0;
+                UI.alert('Alert content', () => {
+                    window.callbackCount++;
+                });
             });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.getByRole('button', { name: button, exact: true }).click();
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            expect(await page.evaluate((_) => window.callbackCount)).toBe(expected);
         });
-        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-        await page.getByRole('button', { name: 'OK' }).click();
-
-        await expect(page.locator('.modal')).toHaveCount(0);
-        expect(await page.evaluate((_) => window.callbackCount)).toBe(1);
-    });
-
-    test('does not run the callback when the Dialog is closed', async ({ page }) => {
-        await page.evaluate((_) => {
-            window.callbackCount = 0;
-            UI.alert('Alert content', () => {
-                window.callbackCount++;
-            });
-        });
-        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-        await page.locator('.btn-close').click();
-
-        await expect(page.locator('.modal')).toHaveCount(0);
-        expect(await page.evaluate((_) => window.callbackCount)).toBe(0);
-    });
+    }
 
     test('allows options to override generated values', async ({ page }) => {
         await page.evaluate((_) => {
