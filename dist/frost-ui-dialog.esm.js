@@ -131,7 +131,8 @@ var Dialog = class {
 			if (event.target !== this.#node) return;
 			if (this.#closeRequested) queueMicrotask(() => this.close());
 		});
-		$.addEventOnce(this.#node, "hidden.ui.modal", () => {
+		$.addEvent(this.#node, "hidden.ui.modal", (event) => {
+			if (event.target !== this.#node) return;
 			$.remove(this.#node);
 			this.#modal = null;
 			this.#node = null;

@@ -163,7 +163,8 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 				if (event.target !== this.#node) return;
 				if (this.#closeRequested) queueMicrotask(() => this.close());
 			});
-			_fr0st_query.default.addEventOnce(this.#node, "hidden.ui.modal", () => {
+			_fr0st_query.default.addEvent(this.#node, "hidden.ui.modal", (event) => {
+				if (event.target !== this.#node) return;
 				_fr0st_query.default.remove(this.#node);
 				this.#modal = null;
 				this.#node = null;
