@@ -74,6 +74,7 @@ var Dialog = class {
 		close: "Close",
 		ok: "OK"
 	};
+	#actionSelected = false;
 	/** @type {Modal|null} */
 	#modal;
 	/** @type {HTMLElement|null} */
@@ -191,7 +192,9 @@ var Dialog = class {
 					attributes: { type: "button" }
 				});
 				$.addEvent(button, "click.ui.dialog", () => {
-					if (buttonData.callback) buttonData.callback();
+					if (this.#actionSelected) return;
+					this.#actionSelected = true;
+					buttonData.callback?.();
 					this.close();
 				});
 				$.append(modalFooter, button);

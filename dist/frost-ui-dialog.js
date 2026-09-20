@@ -106,6 +106,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 			close: "Close",
 			ok: "OK"
 		};
+		#actionSelected = false;
 		/** @type {Modal|null} */
 		#modal;
 		/** @type {HTMLElement|null} */
@@ -223,7 +224,9 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 						attributes: { type: "button" }
 					});
 					_fr0st_query.default.addEvent(button, "click.ui.dialog", () => {
-						if (buttonData.callback) buttonData.callback();
+						if (this.#actionSelected) return;
+						this.#actionSelected = true;
+						buttonData.callback?.();
 						this.close();
 					});
 					_fr0st_query.default.append(modalFooter, button);

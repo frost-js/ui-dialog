@@ -81,6 +81,7 @@ export default class Dialog {
         ok: 'OK',
     };
 
+    #actionSelected = false;
     /** @type {Modal|null} */
     #modal;
     /** @type {HTMLElement|null} */
@@ -266,10 +267,12 @@ export default class Dialog {
                 });
 
                 $.addEvent(button, 'click.ui.dialog', () => {
-                    if (buttonData.callback) {
-                        buttonData.callback();
+                    if (this.#actionSelected) {
+                        return;
                     }
 
+                    this.#actionSelected = true;
+                    buttonData.callback?.();
                     this.close();
                 });
 
