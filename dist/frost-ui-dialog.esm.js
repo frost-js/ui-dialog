@@ -93,8 +93,7 @@ var Dialog = class {
 		}));
 		const opener = document.activeElement;
 		this.#render();
-		if (this.#options.appendTo) $.append(this.#options.appendTo, this.#node);
-		else $.append(document.body, this.#node);
+		$.append(this.#options.appendTo || document.body, this.#node);
 		this.#modal = Modal.init(this.#node, {
 			backdrop: this.#options.backdrop,
 			show: false

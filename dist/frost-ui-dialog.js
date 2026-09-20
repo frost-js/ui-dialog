@@ -125,8 +125,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 			}));
 			const opener = document.activeElement;
 			this.#render();
-			if (this.#options.appendTo) _fr0st_query.default.append(this.#options.appendTo, this.#node);
-			else _fr0st_query.default.append(document.body, this.#node);
+			_fr0st_query.default.append(this.#options.appendTo || document.body, this.#node);
 			this.#modal = _fr0st_ui.Modal.init(this.#node, {
 				backdrop: this.#options.backdrop,
 				show: false
