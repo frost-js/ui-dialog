@@ -123,14 +123,16 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 				...this.constructor.defaults,
 				...options
 			}));
+			const opener = document.activeElement;
 			this.#render();
 			if (this.#options.appendTo) _fr0st_query.default.append(this.#options.appendTo, this.#node);
 			else _fr0st_query.default.append(document.body, this.#node);
 			this.#modal = _fr0st_ui.Modal.init(this.#node, {
 				backdrop: this.#options.backdrop,
-				show: true
+				show: false
 			});
 			this.#events();
+			this.#modal.show(opener);
 		}
 		/**
 		* Gets the dialog node.

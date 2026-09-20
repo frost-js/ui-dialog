@@ -100,6 +100,8 @@ export default class Dialog {
             ...options,
         }));
 
+        const opener = document.activeElement;
+
         this.#render();
 
         if (this.#options.appendTo) {
@@ -110,10 +112,12 @@ export default class Dialog {
 
         this.#modal = Modal.init(this.#node, {
             backdrop: this.#options.backdrop,
-            show: true,
+            show: false,
         });
 
         this.#events();
+
+        this.#modal.show(opener);
     }
 
     /**

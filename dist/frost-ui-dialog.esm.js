@@ -91,14 +91,16 @@ var Dialog = class {
 			...this.constructor.defaults,
 			...options
 		}));
+		const opener = document.activeElement;
 		this.#render();
 		if (this.#options.appendTo) $.append(this.#options.appendTo, this.#node);
 		else $.append(document.body, this.#node);
 		this.#modal = Modal.init(this.#node, {
 			backdrop: this.#options.backdrop,
-			show: true
+			show: false
 		});
 		this.#events();
+		this.#modal.show(opener);
 	}
 	/**
 	* Gets the dialog node.
