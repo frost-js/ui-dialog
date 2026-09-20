@@ -82,6 +82,7 @@ export default class Dialog {
     };
 
     #actionSelected = false;
+    #closeRequested = false;
     /** @type {Modal|null} */
     #modal;
     /** @type {HTMLElement|null} */
@@ -113,13 +114,7 @@ export default class Dialog {
             show: true,
         });
 
-        $.addEventOnce(this.#node, 'hidden.ui.modal', () => {
-            $.remove(this.#node);
-
-            this.#modal = null;
-            this.#node = null;
-            this.#options = null;
-        });
+        this.#events();
     }
 
     /**
@@ -139,10 +134,35 @@ export default class Dialog {
     }
 
     /**
-     * Closes the Dialog.
+     * Closes the Dialog, waiting for the opening transition when necessary.
      */
     close() {
+        this.#closeRequested = true;
         this.#modal?.hide();
+    }
+
+    /**
+     * Binds the modal lifecycle events.
+     */
+    #events() {
+        $.addEvent(this.#node, 'shown.ui.modal', (event) => {
+            if (event.target !== this.#node) {
+                return;
+            }
+
+            if (this.#closeRequested) {
+                // Let the shown event finish before starting the hide lifecycle.
+                queueMicrotask(() => this.close());
+            }
+        });
+
+        $.addEventOnce(this.#node, 'hidden.ui.modal', () => {
+            $.remove(this.#node);
+
+            this.#modal = null;
+            this.#node = null;
+            this.#options = null;
+        });
     }
 
     /**

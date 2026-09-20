@@ -75,6 +75,7 @@ var Dialog = class {
 		ok: "OK"
 	};
 	#actionSelected = false;
+	#closeRequested = false;
 	/** @type {Modal|null} */
 	#modal;
 	/** @type {HTMLElement|null} */
@@ -94,12 +95,7 @@ var Dialog = class {
 			backdrop: this.#options.backdrop,
 			show: true
 		});
-		$.addEventOnce(this.#node, "hidden.ui.modal", () => {
-			$.remove(this.#node);
-			this.#modal = null;
-			this.#node = null;
-			this.#options = null;
-		});
+		this.#events();
 	}
 	/**
 	* Gets the dialog node.
@@ -116,10 +112,26 @@ var Dialog = class {
 		return this.#options;
 	}
 	/**
-	* Closes the Dialog.
+	* Closes the Dialog, waiting for the opening transition when necessary.
 	*/
 	close() {
+		this.#closeRequested = true;
 		this.#modal?.hide();
+	}
+	/**
+	* Binds the modal lifecycle events.
+	*/
+	#events() {
+		$.addEvent(this.#node, "shown.ui.modal", (event) => {
+			if (event.target !== this.#node) return;
+			if (this.#closeRequested) queueMicrotask(() => this.close());
+		});
+		$.addEventOnce(this.#node, "hidden.ui.modal", () => {
+			$.remove(this.#node);
+			this.#modal = null;
+			this.#node = null;
+			this.#options = null;
+		});
 	}
 	/**
 	* Renders the Dialog.

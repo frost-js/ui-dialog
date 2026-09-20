@@ -114,6 +114,29 @@ test.describe('Dialog', () => {
     });
 
     test.describe('#close', () => {
+        for (const backdrop of ['static', false]) {
+            test(`queues an immediate close with backdrop=${backdrop}`, async ({ page }) => {
+                await page.evaluate((backdrop) => {
+                    window.dialogEvents = [];
+                    $.addEvent(document, 'shown.ui.modal hide.ui.modal hidden.ui.modal', (event) => {
+                        window.dialogEvents.push(event.type);
+                    });
+                    window.dialog = new UI.Dialog({ backdrop });
+                    window.dialog.close();
+                    window.dialog.close();
+                }, backdrop);
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+                expect(await page.evaluate((_) => window.dialogEvents)).toEqual([
+                    'shown', 'hide', 'hidden',
+                ]);
+                expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+                expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
+            });
+        }
+
         test('closes the Dialog', async ({ page }) => {
             await page.evaluate((_) => {
                 window.dialog = new UI.Dialog();

@@ -107,6 +107,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 			ok: "OK"
 		};
 		#actionSelected = false;
+		#closeRequested = false;
 		/** @type {Modal|null} */
 		#modal;
 		/** @type {HTMLElement|null} */
@@ -126,12 +127,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 				backdrop: this.#options.backdrop,
 				show: true
 			});
-			_fr0st_query.default.addEventOnce(this.#node, "hidden.ui.modal", () => {
-				_fr0st_query.default.remove(this.#node);
-				this.#modal = null;
-				this.#node = null;
-				this.#options = null;
-			});
+			this.#events();
 		}
 		/**
 		* Gets the dialog node.
@@ -148,10 +144,26 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 			return this.#options;
 		}
 		/**
-		* Closes the Dialog.
+		* Closes the Dialog, waiting for the opening transition when necessary.
 		*/
 		close() {
+			this.#closeRequested = true;
 			this.#modal?.hide();
+		}
+		/**
+		* Binds the modal lifecycle events.
+		*/
+		#events() {
+			_fr0st_query.default.addEvent(this.#node, "shown.ui.modal", (event) => {
+				if (event.target !== this.#node) return;
+				if (this.#closeRequested) queueMicrotask(() => this.close());
+			});
+			_fr0st_query.default.addEventOnce(this.#node, "hidden.ui.modal", () => {
+				_fr0st_query.default.remove(this.#node);
+				this.#modal = null;
+				this.#node = null;
+				this.#options = null;
+			});
 		}
 		/**
 		* Renders the Dialog.
