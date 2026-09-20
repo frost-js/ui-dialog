@@ -12,35 +12,25 @@ test.describe('confirm', () => {
         await expect(page.locator('.modal-footer button').nth(1)).toHaveClass(/\bbtn-primary\b/);
     });
 
-    test('reports false when Cancel is selected', async ({ page }) => {
-        await page.evaluate((_) => {
-            window.result = null;
-            UI.confirm('Confirm content', (result) => {
-                window.result = result;
+    for (const { button, expected } of [
+        { button: 'Cancel', expected: false },
+        { button: 'OK', expected: true },
+    ]) {
+        test(`reports ${expected} when ${button} is selected`, async ({ page }) => {
+            await page.evaluate((_) => {
+                window.result = null;
+                UI.confirm('Confirm content', (result) => {
+                    window.result = result;
+                });
             });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.getByRole('button', { name: button }).click();
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            expect(await page.evaluate((_) => window.result)).toBe(expected);
         });
-        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-        await page.getByRole('button', { name: 'Cancel' }).click();
-
-        await expect(page.locator('.modal')).toHaveCount(0);
-        expect(await page.evaluate((_) => window.result)).toBe(false);
-    });
-
-    test('reports true when OK is selected', async ({ page }) => {
-        await page.evaluate((_) => {
-            window.result = null;
-            UI.confirm('Confirm content', (result) => {
-                window.result = result;
-            });
-        });
-        await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-        await page.getByRole('button', { name: 'OK' }).click();
-
-        await expect(page.locator('.modal')).toHaveCount(0);
-        expect(await page.evaluate((_) => window.result)).toBe(true);
-    });
+    }
 
     test('allows options to override generated values', async ({ page }) => {
         await page.evaluate((_) => {

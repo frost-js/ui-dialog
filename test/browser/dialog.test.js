@@ -173,14 +173,7 @@ test.describe('Dialog', () => {
             });
             await expect(page.locator('.modal')).toHaveCount(0);
 
-            expect(await page.evaluate((_) => {
-                try {
-                    window.dialog.close();
-                    return true;
-                } catch {
-                    return false;
-                }
-            })).toBe(true);
+            await page.evaluate((_) => window.dialog.close());
         });
 
         test('clears the public state after cleanup', async ({ page }) => {
@@ -268,22 +261,20 @@ test.describe('Dialog', () => {
     });
 
     test.describe('closeBtn option', () => {
-        test('renders a close button by default', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog();
+        for (const { name, options, count } of [
+            { name: 'default', options: {}, count: 1 },
+            { name: 'enabled', options: { closeBtn: true }, count: 1 },
+            { name: 'disabled', options: { closeBtn: false }, count: 0 },
+        ]) {
+            test(`renders the close button and header (${name})`, async ({ page }) => {
+                await page.evaluate((options) => {
+                    new UI.Dialog(options);
+                }, options);
+
+                await expect(page.locator('.btn-close')).toHaveCount(count);
+                await expect(page.locator('.modal-header')).toHaveCount(count);
             });
-
-            await expect(page.locator('.btn-close')).toHaveCount(1);
-        });
-
-        test('does not render a close button when disabled', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ closeBtn: false });
-            });
-
-            await expect(page.locator('.btn-close')).toHaveCount(0);
-            await expect(page.locator('.modal-header')).toHaveCount(0);
-        });
+        }
 
         test('closes the Dialog when selected', async ({ page }) => {
             await page.evaluate((_) => {
@@ -298,6 +289,49 @@ test.describe('Dialog', () => {
     });
 
     test.describe('buttons option', () => {
+        for (const { name, buttons, expected } of [
+            { name: 'empty array', buttons: [], expected: [] },
+            { name: 'custom array', buttons: [{ text: 'Custom' }], expected: ['Custom'] },
+        ]) {
+            test(`replaces default buttons without inheriting callbacks (${name})`, async ({ page }) => {
+                const hasCallbacks = await page.evaluate((buttons) => {
+                    UI.Dialog.defaults.buttons = [
+                        { text: 'Default', callback: () => {} },
+                        { text: 'Extra' },
+                    ];
+                    const dialog = new UI.Dialog({ buttons });
+                    return dialog.options.buttons.some((button) => typeof button.callback === 'function');
+                }, buttons);
+
+                await expect(page.locator('.modal-footer button')).toHaveText(expected);
+                await expect(page.locator('.modal-footer')).toHaveCount(expected.length ? 1 : 0);
+                expect(hasCallbacks).toBe(false);
+            });
+        }
+
+        for (const source of ['input', 'defaults']) {
+            test(`isolates button callbacks from later ${source} changes`, async ({ page }) => {
+                await page.evaluate((source) => {
+                    window.actions = [];
+                    const buttons = [{ text: 'Save', callback: () => window.actions.push('original') }];
+                    if (source === 'defaults') {
+                        UI.Dialog.defaults.buttons = buttons;
+                    }
+                    new UI.Dialog(source === 'input' ? { buttons } : {});
+                    buttons[0].text = 'Changed';
+                    buttons[0].callback = () => window.actions.push('changed');
+                    buttons.push({ text: 'Extra' });
+                }, source);
+                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+                await expect(page.locator('.modal-footer button')).toHaveText(['Save']);
+
+                await page.getByRole('button', { name: 'Save' }).click();
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                expect(await page.evaluate((_) => window.actions)).toEqual(['original']);
+            });
+        }
+
         test('renders custom buttons', async ({ page }) => {
             await page.evaluate((_) => {
                 new UI.Dialog({
@@ -342,6 +376,55 @@ test.describe('Dialog', () => {
             expect(await page.evaluate((_) => window.callbackCount)).toBe(1);
         });
 
+        test('handles only the first action across repeated and different button clicks', async ({ page }) => {
+            await page.evaluate((_) => {
+                window.actions = [];
+                new UI.Dialog({
+                    buttons: [
+                        { text: 'Save', callback: () => window.actions.push('save') },
+                        { text: 'Cancel', callback: () => window.actions.push('cancel') },
+                    ],
+                });
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            await page.evaluate((_) => {
+                const [save, cancel] = document.querySelectorAll('.modal-footer button');
+                // Dispatch in one task, before asynchronous hide cleanup can remove the buttons.
+                save.click();
+                save.click();
+                cancel.click();
+            });
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            expect(await page.evaluate((_) => window.actions)).toEqual(['save']);
+        });
+
+        test('closes and reports a synchronous callback error', async ({ page }) => {
+            await page.evaluate((_) => {
+                window.dialog = new UI.Dialog({
+                    closeBtn: false,
+                    buttons: [{
+                        text: 'Save',
+                        callback: () => {
+                            throw new Error('Action failed');
+                        },
+                    }],
+                });
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+            const errorPromise = page.waitForEvent('pageerror');
+            await page.getByRole('button', { name: 'Save' }).click();
+            expect((await errorPromise).message).toBe('Action failed');
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+            await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+            expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+            expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
+        });
+
         test('closes without a callback', async ({ page }) => {
             await page.evaluate((_) => {
                 new UI.Dialog({ buttons: [{ text: 'Done' }] });
@@ -363,39 +446,37 @@ test.describe('Dialog', () => {
     });
 
     test.describe('size option', () => {
-        test('renders supported dialog sizes', async ({ page }) => {
-            await page.evaluate((_) => {
-                for (const size of ['sm', 'lg', 'xl']) {
-                    new UI.Dialog({ size });
-                }
+        for (const { name, options, expected } of [
+            { name: 'default', options: {}, expected: 'modal-dialog' },
+            { name: 'small', options: { size: 'sm' }, expected: 'modal-dialog modal-sm' },
+            { name: 'large', options: { size: 'lg' }, expected: 'modal-dialog modal-lg' },
+            { name: 'extra large', options: { size: 'xl' }, expected: 'modal-dialog modal-xl' },
+        ]) {
+            test(`renders the dialog size (${name})`, async ({ page }) => {
+                await page.evaluate((options) => {
+                    new UI.Dialog(options);
+                }, options);
+
+                await expect(page.locator('.modal-dialog')).toHaveCount(1);
+                await expect(page.locator('.modal-dialog')).toHaveClass(expected);
             });
-
-            const dialogs = page.locator('.modal-dialog');
-            await expect(dialogs).toHaveCount(3);
-            await expect(dialogs).toHaveClass([
-                'modal-dialog modal-sm',
-                'modal-dialog modal-lg',
-                'modal-dialog modal-xl',
-            ]);
-        });
-
-        test('renders the default dialog size', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog();
-            });
-
-            await expect(page.locator('.modal-dialog')).toHaveClass('modal-dialog');
-        });
+        }
     });
 
     test.describe('centerVertical option', () => {
-        test('centers the Dialog vertically', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ centerVertical: true });
-            });
+        for (const { name, options, expected } of [
+            { name: 'default', options: {}, expected: 'modal-dialog' },
+            { name: 'enabled', options: { centerVertical: true }, expected: 'modal-dialog modal-dialog-centered' },
+            { name: 'disabled', options: { centerVertical: false }, expected: 'modal-dialog' },
+        ]) {
+            test(`renders vertical centering (${name})`, async ({ page }) => {
+                await page.evaluate((options) => {
+                    new UI.Dialog(options);
+                }, options);
 
-            await expect(page.locator('.modal-dialog')).toHaveClass(/\bmodal-dialog-centered\b/);
-        });
+                await expect(page.locator('.modal-dialog')).toHaveClass(expected);
+            });
+        }
     });
 
     test.describe('appendTo option', () => {
@@ -409,7 +490,7 @@ test.describe('Dialog', () => {
 
         test('appends to a custom QuerySet target', async ({ page }) => {
             await page.evaluate((_) => {
-                $.setHTML(document.body, '<section id="dialog-host"></section>');
+                document.body.innerHTML = '<section id="dialog-host"></section>';
                 new UI.Dialog({ appendTo: $('#dialog-host') });
             });
 
@@ -418,40 +499,26 @@ test.describe('Dialog', () => {
     });
 
     test.describe('backdrop option', () => {
-        test('uses a static backdrop by default', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog();
+        for (const { name, options, backdropCount, remaining } of [
+            { name: 'default', options: {}, backdropCount: 1, remaining: 1 },
+            { name: 'static', options: { backdrop: 'static' }, backdropCount: 1, remaining: 1 },
+            { name: 'dismissible', options: { backdrop: true }, backdropCount: 1, remaining: 0 },
+            { name: 'none', options: { backdrop: false }, backdropCount: 0, remaining: 1 },
+        ]) {
+            test(`handles backdrop clicks (${name})`, async ({ page }) => {
+                await page.evaluate((options) => {
+                    new UI.Dialog(options);
+                }, options);
+                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+                await expect(page.locator('.modal-backdrop')).toHaveCount(backdropCount);
+
+                await page.locator('.modal').click({ position: { x: 1, y: 1 } });
+
+                await expect(page.locator('.modal')).toHaveCount(remaining);
+                await expect(page.locator('.modal.show')).toHaveCount(remaining);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(backdropCount * remaining);
             });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.locator('.modal').click({ position: { x: 1, y: 1 } });
-
-            await expect(page.locator('.modal')).toHaveClass(/\bshow\b/);
-            await expect(page.locator('.modal-backdrop')).toHaveCount(1);
-        });
-
-        test('dismisses with a dismissible backdrop', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ backdrop: true });
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.locator('.modal').click({ position: { x: 1, y: 1 } });
-
-            await expect(page.locator('.modal')).toHaveCount(0);
-            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
-        });
-
-        test('renders without a backdrop', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ backdrop: false });
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
-            await page.locator('.modal').click({ position: { x: 1, y: 1 } });
-            await expect(page.locator('.modal')).toHaveClass(/\bshow\b/);
-        });
+        }
     });
 
     test.describe('events', () => {
@@ -507,9 +574,26 @@ test.describe('Dialog', () => {
     });
 
     test.describe('focus trap', () => {
+        test('restores focus to the opener after closing', async ({ page }) => {
+            await page.evaluate((_) => {
+                document.body.innerHTML = '<button id="opener" type="button">Open dialog</button>';
+            });
+            await page.locator('#opener').focus();
+            await page.evaluate((_) => {
+                new UI.Dialog();
+            });
+            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+            await expect(page.locator('.modal')).toBeFocused();
+
+            await page.getByRole('button', { name: 'Close', exact: true }).click();
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            await expect(page.locator('#opener')).toBeFocused();
+        });
+
         test('prevents focus outside the Dialog', async ({ page }) => {
             await page.evaluate((_) => {
-                $.setHTML(document.body, '<button id="outside" type="button"></button>');
+                document.body.innerHTML = '<button id="outside" type="button"></button>';
                 new UI.Dialog({ buttons: [{ text: 'Action' }] });
             });
             await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
@@ -521,6 +605,42 @@ test.describe('Dialog', () => {
     });
 
     test.describe('stacked dialogs', () => {
+        test('keeps the parent open when a nested dialog closes and still cleans up the parent', async ({ page }) => {
+            await page.evaluate((_) => {
+                const host = document.createElement('div');
+                host.id = 'nested-host';
+                window.parentDialog = new UI.Dialog({ title: 'Parent', content: host });
+            });
+            const parent = page.getByRole('dialog', { name: 'Parent', exact: true });
+            await expect(parent).toHaveAttribute('aria-hidden', 'false');
+
+            await page.evaluate((_) => {
+                window.childDialog = new UI.Dialog({
+                    title: 'Child',
+                    appendTo: document.querySelector('#nested-host'),
+                });
+            });
+            await expect(page.getByRole('dialog', { name: 'Child', exact: true }))
+                .toHaveAttribute('aria-hidden', 'false');
+
+            await page.evaluate((_) => window.childDialog.close());
+
+            await expect(page.locator('#nested-host .modal')).toHaveCount(0);
+            await expect(parent).toHaveClass(/\bshow\b/);
+            await expect(page.locator('.modal-backdrop')).toHaveCount(1);
+            await expect(page.locator('body')).toHaveClass(/\bmodal-open\b/);
+
+            await page.evaluate((_) => window.parentDialog.close());
+
+            await expect(page.locator('.modal')).toHaveCount(0);
+            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+            await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+            expect(await page.evaluate((_) => ({
+                child: window.childDialog.node,
+                parent: window.parentDialog.node,
+            }))).toEqual({ child: null, parent: null });
+        });
+
         test('stacks Dialogs and reindexes after closing', async ({ page }) => {
             await page.evaluate((_) => {
                 window.firstDialog = new UI.Dialog({ title: 'First' });
