@@ -105,6 +105,8 @@ Load Frost UI's all-in-one bundle before Dialog. The UI bundle supplies both the
 
 The UMD bundle adds `Dialog`, `alert`, and `confirm` to the existing `globalThis.UI` object. It expects `globalThis.UI` and `globalThis.fQuery` to exist before it loads. If the non-bundled Frost UI build is used instead, load fQuery, Frost UI, and Dialog in that order.
 
+Do not load the separate fQuery script when using `frost-ui-bundle.js` or `frost-ui-bundle.min.js`.
+
 ## Usage
 
 ### Alert
@@ -156,15 +158,17 @@ const dialog = new Dialog({
     ],
 });
 
-// Closing is asynchronous because Frost UI waits for the modal transition.
+// An immediate close waits for opening to finish, then starts the hide transition.
 dialog.close();
 ```
 
-Each `Dialog` is shown immediately. Frost UI manages the backdrop, focus trap, stack position, keyboard handling, transition state, and body scroll lock. The dialog removes itself after the `hidden.ui.modal` event.
+Each `Dialog` starts showing immediately. Frost UI manages the backdrop, focus trap, stack position, keyboard handling, transition state, and body scroll lock. The dialog removes itself when its own `hidden.ui.modal` event fires.
 
 ## Options
 
-Options passed to the constructor are applied after `Dialog.defaults`. The resolved `dialog.options` object is frozen.
+Options passed to the constructor replace the corresponding values in `Dialog.defaults`. A supplied `buttons` array replaces the entire default array; `buttons: []` removes all default actions.
+
+Resolved arrays and plain objects are deep-copied, so later changes to the supplied button definitions or defaults do not affect an existing dialog. DOM nodes and callback functions retain their identity. The resolved `dialog.options` object is shallow-frozen; nested arrays and objects are not frozen.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -172,13 +176,13 @@ Options passed to the constructor are applied after `Dialog.defaults`. The resol
 | `title` | `string \| null` | `null` | Set the dialog title and accessible name. |
 | `buttons` | `DialogButton[]` | `[]` | Add action buttons to the footer. |
 | `size` | `'sm' \| 'lg' \| 'xl' \| null` | `null` | Apply a Frost UI modal size. |
-| `backdrop` | `boolean \| 'static'` | `'static'` | Use a dismissible, absent, or non-dismissible backdrop. |
+| `backdrop` | `boolean \| 'static'` | `'static'` | `true` allows backdrop dismissal; `false` omits the backdrop. `'static'` prevents dismissal by backdrop clicks and Escape. |
 | `centerVertical` | `boolean` | `false` | Center the modal dialog vertically. |
 | `closeBtn` | `boolean` | `true` | Show a close button in the header. |
 | `appendTo` | `NodeInput \| null` | `null` | Append the dialog to a custom target instead of `document.body`. |
 | `ariaLabel` | `string` | `'Dialog'` | Provide the accessible name when no title is present. |
 
-`NodeInput` accepts the node inputs supported by fQuery, including a DOM `Node`, `DocumentFragment`, node collection, array, selector, or `QuerySet`. For `content`, every string is rendered as text rather than resolved as a selector; pass the selected node or `QuerySet` when appending existing DOM content.
+`NodeInput` accepts the node inputs supported by fQuery, including a DOM `Node`, `DocumentFragment`, node collection, array, selector, or `QuerySet`. A string passed directly as `content` is rendered as text rather than resolved as a selector; pass the selected node or `QuerySet` when appending existing DOM content.
 
 ## Buttons
 
@@ -188,7 +192,7 @@ Options passed to the constructor are applied after `Dialog.defaults`. The resol
 | `style` | `string \| string[]` | No | Add one or more classes after `Dialog.classes.btn`. |
 | `callback` | `() => void` | No | Run immediately when the button is selected, before the dialog starts closing. |
 
-Every action button uses `type="button"`. Selecting one calls its callback, if present, then calls `dialog.close()`.
+Every action button uses `type="button"`. The first action selected calls its callback, if present, then calls `dialog.close()`. Further action-button clicks on that dialog are ignored.
 
 ```js
 new Dialog({
@@ -210,7 +214,7 @@ new Dialog({
 
 ## Content safety
 
-String content is passed to `textContent`; it is never interpreted as HTML:
+A string passed directly as `content` is passed to `textContent`; it is never interpreted as HTML:
 
 ```js
 alert('<strong>This is visible text, not markup.</strong>');
@@ -233,11 +237,14 @@ Avoid assigning untrusted strings to `innerHTML` before passing a node to Dialog
 ## Callback behavior
 
 - A custom button callback runs only when that action button is selected.
+- Only the first action selection is handled per dialog, preventing repeated callbacks from rapid clicks or selecting another action while closing.
 - `alert()` calls its callback only when the generated OK button is selected.
 - `confirm()` calls its callback with `false` for Cancel and `true` for OK.
 - The header close button, a dismissible backdrop, Escape, or `dialog.close()` does not run an action or helper callback.
 - Helper `options` are spread after their generated content and buttons. Supplying `content` or `buttons` in `options` replaces the generated value.
 - Callbacks run before the asynchronous hide transition begins.
+- `dialog.close()` is called even if a callback throws synchronously; the error is not swallowed.
+- Callback return values are ignored. Returned promises are not awaited before closing.
 
 ## Dialog API
 
@@ -246,7 +253,7 @@ Avoid assigning untrusted strings to `innerHTML` before passing a node to Dialog
 | `new Dialog(options?)` | `Dialog` | Render, append, and immediately show a dialog. |
 | `dialog.node` | `HTMLElement \| null` | Get the modal element, or `null` after cleanup. |
 | `dialog.options` | `Readonly<DialogOptions> \| null` | Get the frozen resolved options, or `null` after cleanup. |
-| `dialog.close()` | `void` | Start hiding the dialog. Repeated and post-cleanup calls are safe. |
+| `dialog.close()` | `void` | Request hiding, waiting for an in-progress opening transition to finish first. Repeated and post-cleanup calls are safe. |
 
 ## Helpers
 
@@ -321,16 +328,21 @@ The generated node is controlled by Frost UI's `Modal` component and emits its n
 
 Because `show.ui.modal` is triggered during construction, attach document-level delegated listeners before creating a Dialog when that event is needed.
 
+If `close()` is called during opening, the `shown.ui.modal` event finishes before the hide lifecycle starts. Lifecycle events from nested modals do not trigger the parent dialog's close handling or cleanup.
+
 ## Accessibility
 
 - A titled dialog renders an `h2.modal-title` with a generated ID and references it through `aria-labelledby`.
 - An untitled dialog uses `ariaLabel` through `aria-label`. Supply a specific label when the default “Dialog” does not describe the task.
 - Dialog starts with `aria-hidden="true"`; Frost UI Modal manages `aria-hidden` and `aria-modal` across asynchronous transitions.
 - Frost UI traps focus inside the active dialog, handles stacked dialogs, and restores shared page state as dialogs close.
+- Dialog captures the focused element before rendering and passes it to Frost UI, which attempts to restore focus to that element when the dialog closes.
 - Generated close and action controls are native buttons. The close button uses `Dialog.lang.close` as its accessible label.
 - Keep titles and button labels concise, and provide clear instructions or error text in the content when the action has consequences.
 
 ## Development
+
+Use Node.js matching `^20.19.0 || ^22.13.0 || >=24`. Install dependencies with `npm ci`, then install Playwright browsers with `npx playwright install --with-deps`.
 
 ```bash
 npm test
@@ -338,7 +350,11 @@ npm run lint
 npm run build
 ```
 
-`npm test` builds the bundles and runs the Playwright suite in Chromium, Firefox, and WebKit.
+`npm test` rebuilds JavaScript, then runs the Playwright suite in Chromium, Firefox, and WebKit. `npm run test:browser` runs the suite against the existing bundles, so rebuild after changing source files.
+
+After building, `npm run test:coverage` runs Chromium tests and writes coverage reports to `coverage/`.
+
+`npm run test:headed` and `npm run test:ui` also use the existing bundles and open headed browsers or the Playwright UI.
 
 ## License
 
