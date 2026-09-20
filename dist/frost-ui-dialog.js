@@ -119,7 +119,10 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		* @param {DialogOptions} [options] The Dialog options.
 		*/
 		constructor(options = {}) {
-			this.#options = Object.freeze(_fr0st_query.default._extend({}, this.constructor.defaults, options));
+			this.#options = Object.freeze(_fr0st_query.default._extend({}, {
+				...this.constructor.defaults,
+				...options
+			}));
 			this.#render();
 			if (this.#options.appendTo) _fr0st_query.default.append(this.#options.appendTo, this.#node);
 			else _fr0st_query.default.append(document.body, this.#node);

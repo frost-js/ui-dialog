@@ -95,11 +95,10 @@ export default class Dialog {
      * @param {DialogOptions} [options] The Dialog options.
      */
     constructor(options = {}) {
-        this.#options = Object.freeze($._extend(
-            {},
-            this.constructor.defaults,
-            options,
-        ));
+        this.#options = Object.freeze($._extend({}, {
+            ...this.constructor.defaults,
+            ...options,
+        }));
 
         this.#render();
 

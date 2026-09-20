@@ -87,7 +87,10 @@ var Dialog = class {
 	* @param {DialogOptions} [options] The Dialog options.
 	*/
 	constructor(options = {}) {
-		this.#options = Object.freeze($._extend({}, this.constructor.defaults, options));
+		this.#options = Object.freeze($._extend({}, {
+			...this.constructor.defaults,
+			...options
+		}));
 		this.#render();
 		if (this.#options.appendTo) $.append(this.#options.appendTo, this.#node);
 		else $.append(document.body, this.#node);
