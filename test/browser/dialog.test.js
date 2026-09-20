@@ -541,7 +541,7 @@ test.describe('Dialog', () => {
         });
     });
 
-    test.describe('focus trap', () => {
+    test.describe('focus management', () => {
         test('restores focus to the opener after closing', async ({ page }) => {
             await page.evaluate((_) => {
                 document.body.innerHTML = '<button id="opener" type="button">Open dialog</button>';
