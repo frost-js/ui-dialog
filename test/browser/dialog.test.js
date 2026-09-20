@@ -91,21 +91,6 @@ test.describe('Dialog', () => {
             await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
             await expect(page.locator('.modal')).toHaveAttribute('aria-modal', 'true');
         });
-
-        test('associates the title with the dialog', async ({ page }) => {
-            await page.evaluate((_) => {
-                new UI.Dialog({ title: 'Dialog title' });
-            });
-
-            const modal = page.locator('.modal');
-            const title = modal.locator('.modal-title');
-            await expect(modal).not.toHaveAttribute('aria-label');
-            await expect(title).toHaveAttribute('id', /^ui-dialog-title-/);
-            await expect(title).toHaveJSProperty('tagName', 'H2');
-
-            const titleId = await title.getAttribute('id');
-            await expect(modal).toHaveAttribute('aria-labelledby', titleId);
-        });
     });
 
     test.describe('#close', () => {
@@ -237,13 +222,20 @@ test.describe('Dialog', () => {
     });
 
     test.describe('title and ariaLabel options', () => {
-        test('renders a title', async ({ page }) => {
+        test('renders and associates the title with the dialog', async ({ page }) => {
             await page.evaluate((_) => {
                 new UI.Dialog({ title: 'Dialog title' });
             });
 
-            await expect(page.locator('.modal-title')).toHaveText('Dialog title');
-            await expect(page.locator('.modal')).not.toHaveAttribute('aria-label');
+            const modal = page.locator('.modal');
+            const title = modal.locator('.modal-title');
+            await expect(title).toHaveText('Dialog title');
+            await expect(modal).not.toHaveAttribute('aria-label');
+            await expect(title).toHaveAttribute('id', /^ui-dialog-title-/);
+            await expect(title).toHaveJSProperty('tagName', 'H2');
+
+            const titleId = await title.getAttribute('id');
+            await expect(modal).toHaveAttribute('aria-labelledby', titleId);
         });
 
         test('uses ariaLabel when the title is empty', async ({ page }) => {
