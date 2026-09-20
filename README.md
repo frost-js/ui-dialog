@@ -14,7 +14,7 @@ Programmatic alert, confirmation, and custom modal dialogs for Frost UI.
 - Alert and confirm helpers with predictable action callbacks
 - Custom titles, content, buttons, sizes, backdrops, centering, and append targets
 - Text-safe string content and appendable DOM or fQuery content
-- Frost UI v3 transitions, focus trapping, stacked modal handling, and accessibility state
+- Frost UI v4 transitions, focus trapping, stacked modal handling, and accessibility state
 - Frozen resolved options with read-only `node` and `options` accessors
 - Prebuilt ESM and UMD bundles with source maps
 - No component-specific CSS or Sass
@@ -24,7 +24,7 @@ Programmatic alert, confirmation, and custom modal dialogs for Frost UI.
 
 ### Browser projects / bundlers
 
-Install Dialog with its Frost UI and fQuery peers:
+Install Dialog with its Frost UI v4 and fQuery v5 peers:
 
 ```bash
 npm i @fr0st/ui-dialog @fr0st/ui @fr0st/query
