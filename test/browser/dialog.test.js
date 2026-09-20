@@ -117,35 +117,26 @@ test.describe('Dialog', () => {
             });
         }
 
-        test('closes the Dialog', async ({ page }) => {
-            await page.evaluate((_) => {
-                window.dialog = new UI.Dialog();
+        for (const { calls } of [{ calls: 1 }, { calls: 3 }]) {
+            test(`cleans up the dialog and public state with calls=${calls}`, async ({ page }) => {
+                await page.evaluate((_) => {
+                    window.dialog = new UI.Dialog();
+                });
+                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
+
+                await page.evaluate((calls) => {
+                    for (let i = 0; i < calls; i++) {
+                        window.dialog.close();
+                    }
+                }, calls);
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+                expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+                expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
             });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.evaluate((_) => {
-                window.dialog.close();
-            });
-
-            await expect(page.locator('.modal')).toHaveCount(0);
-            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
-            await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
-        });
-
-        test('can be called multiple times', async ({ page }) => {
-            await page.evaluate((_) => {
-                window.dialog = new UI.Dialog();
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.evaluate((_) => {
-                window.dialog.close();
-                window.dialog.close();
-                window.dialog.close();
-            });
-
-            await expect(page.locator('.modal')).toHaveCount(0);
-        });
+        }
 
         test('can be called after cleanup', async ({ page }) => {
             await page.evaluate((_) => {
@@ -159,21 +150,6 @@ test.describe('Dialog', () => {
             await expect(page.locator('.modal')).toHaveCount(0);
 
             await page.evaluate((_) => window.dialog.close());
-        });
-
-        test('clears the public state after cleanup', async ({ page }) => {
-            await page.evaluate((_) => {
-                window.dialog = new UI.Dialog();
-            });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
-
-            await page.evaluate((_) => {
-                window.dialog.close();
-            });
-            await expect(page.locator('.modal')).toHaveCount(0);
-
-            expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
-            expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
         });
     });
 
