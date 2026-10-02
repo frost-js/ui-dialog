@@ -1,5 +1,6 @@
-const $ = globalThis.$;
+const $ = globalThis.fQuery;
 const UI = globalThis.UI;
+const themeKey = 'frostui-dialog-demo-theme';
 
 const setTheme = (theme) => {
     if (theme === 'system') {
@@ -11,26 +12,38 @@ const setTheme = (theme) => {
     $('[data-demo-theme]').setValue(theme);
 };
 
-const storedTheme = localStorage.getItem('frostui-dialog-demo-theme');
-setTheme(['light', 'dark'].includes(storedTheme) ? storedTheme : 'system');
-
 $.ready(() => {
+    let storedTheme;
+
+    try {
+        storedTheme = localStorage.getItem(themeKey);
+    } catch {
+        // The demo remains usable when browser storage is unavailable.
+    }
+
+    const requestedTheme = new URLSearchParams(location.search).get('theme');
+    const initialTheme = requestedTheme || storedTheme;
+    setTheme(['light', 'dark'].includes(initialTheme) ? initialTheme : 'system');
+
+    $('[data-demo-theme]').addEvent('change', (event) => {
+        const theme = $.getValue(event.currentTarget);
+        setTheme(theme);
+
+        try {
+            if (theme === 'system') {
+                localStorage.removeItem(themeKey);
+            } else {
+                localStorage.setItem(themeKey, theme);
+            }
+        } catch {
+            // Theme selection still applies for the current page.
+        }
+    });
+
     const report = (message) => {
         const time = new Date().toLocaleTimeString();
         $('#callback-output').setText(`${time} — ${message}`);
     };
-
-    $('[data-demo-theme]').addEvent('change', (event) => {
-        const theme = $.getValue(event.currentTarget);
-
-        if (theme === 'system') {
-            localStorage.removeItem('frostui-dialog-demo-theme');
-        } else {
-            localStorage.setItem('frostui-dialog-demo-theme', theme);
-        }
-
-        setTheme(theme);
-    });
 
     $('[data-demo-action]').addEvent('click', (event) => {
         const action = $.getDataset(event.currentTarget, 'demoAction');
@@ -145,7 +158,7 @@ $.ready(() => {
                     content: 'Inspect the DOM to see this modal under #dialog-host.',
                 });
 
-                report(`Dialog parent: #${dialog.node.parentElement.id}.`);
+                report(`Dialog parent: #${$.getProperty(dialog.node.parentElement, 'id')}.`);
                 break;
             }
             case 'stack': {
@@ -179,6 +192,4 @@ $.ready(() => {
             }
         }
     });
-
-    setTheme(document.documentElement.dataset.uiTheme || 'system');
 });

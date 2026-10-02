@@ -1,8 +1,13 @@
+section[id],
+.demo-anchor {
+    scroll-margin-top: 6rem;
+}
+
 .demo-output {
     min-height: 7rem;
 }
 
 .demo-append-target {
-    border: 2px dashed currentColor;
     min-height: 8rem;
+    border: 2px dashed currentcolor;
 }
