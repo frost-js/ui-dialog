@@ -91,6 +91,33 @@ test.describe('Dialog', () => {
             await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
             await expect(page.locator('.modal')).toHaveAttribute('aria-modal', 'true');
         });
+
+        test.describe('failed initialization', () => {
+            test('removes a dialog when rendering fails', async ({ page }) => {
+                await expect(page.evaluate((_) => new UI.Dialog({ buttons: [{ text: 'Save', style: 123 }] })))
+                    .rejects.toThrow();
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                await page.evaluate((_) => new UI.Dialog());
+                await expect(page.locator('.modal')).toHaveCount(1);
+            });
+
+            test('removes a dialog after a failed modal style lock', async ({ page }) => {
+                const held = await page.evaluateHandle((_) => $.setStyleLock(document.body, 'overflow-y', 'auto'));
+
+                await expect(page.evaluate((_) => new UI.Dialog()))
+                    .rejects.toThrow('CSS property "overflow-y" is already locked.');
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                expect(await page.evaluate((_) => document.body.style.overflowY)).toBe('auto');
+
+                await held.evaluate((release) => release());
+                await page.evaluate((_) => new UI.Dialog());
+                await expect(page.locator('.modal')).toHaveClass(/\bshow\b/);
+            });
+        });
     });
 
     test.describe('#close', () => {

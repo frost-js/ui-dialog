@@ -123,15 +123,24 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 				...this.constructor.defaults,
 				...options
 			}));
-			const opener = document.activeElement;
-			this.#render();
-			_fr0st_query.default.append(this.#options.appendTo || document.body, this.#node);
-			this.#modal = _fr0st_ui.Modal.init(this.#node, {
-				backdrop: this.#options.backdrop,
-				show: false
-			});
-			this.#events();
-			this.#modal.show(opener);
+			try {
+				const opener = document.activeElement;
+				this.#render();
+				_fr0st_query.default.append(this.#options.appendTo || document.body, this.#node);
+				this.#modal = _fr0st_ui.Modal.init(this.#node, {
+					backdrop: this.#options.backdrop,
+					show: false
+				});
+				this.#events();
+				this.#modal.show(opener);
+			} catch (error) {
+				this.#modal?.dispose();
+				_fr0st_query.default.remove(this.#node);
+				this.#modal = null;
+				this.#node = null;
+				this.#options = null;
+				throw error;
+			}
 		}
 		/**
 		* Gets the dialog node.

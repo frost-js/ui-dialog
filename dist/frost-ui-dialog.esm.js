@@ -91,15 +91,24 @@ var Dialog = class {
 			...this.constructor.defaults,
 			...options
 		}));
-		const opener = document.activeElement;
-		this.#render();
-		$.append(this.#options.appendTo || document.body, this.#node);
-		this.#modal = Modal.init(this.#node, {
-			backdrop: this.#options.backdrop,
-			show: false
-		});
-		this.#events();
-		this.#modal.show(opener);
+		try {
+			const opener = document.activeElement;
+			this.#render();
+			$.append(this.#options.appendTo || document.body, this.#node);
+			this.#modal = Modal.init(this.#node, {
+				backdrop: this.#options.backdrop,
+				show: false
+			});
+			this.#events();
+			this.#modal.show(opener);
+		} catch (error) {
+			this.#modal?.dispose();
+			$.remove(this.#node);
+			this.#modal = null;
+			this.#node = null;
+			this.#options = null;
+			throw error;
+		}
 	}
 	/**
 	* Gets the dialog node.
