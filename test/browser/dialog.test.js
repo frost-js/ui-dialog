@@ -414,29 +414,35 @@ test.describe('Dialog', () => {
             expect(await page.evaluate((_) => window.actions)).toEqual(['save']);
         });
 
-        test('closes and reports a synchronous callback error', async ({ page }) => {
-            await page.evaluate((_) => {
-                window.dialog = new UI.Dialog({
-                    closeBtn: false,
-                    buttons: [{
-                        text: 'Save',
-                        callback: () => {
-                            throw new Error('Action failed');
-                        },
-                    }],
-                });
+        test.describe('callback errors', () => {
+            test.use({
+                expectedBrowserErrors: ['Action failed'],
             });
-            await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
 
-            const errorPromise = page.waitForEvent('pageerror');
-            await page.getByRole('button', { name: 'Save' }).click();
-            expect((await errorPromise).message).toBe('Action failed');
+            test('closes and reports a synchronous callback error', async ({ page }) => {
+                await page.evaluate((_) => {
+                    window.dialog = new UI.Dialog({
+                        closeBtn: false,
+                        buttons: [{
+                            text: 'Save',
+                            callback: () => {
+                                throw new Error('Action failed');
+                            },
+                        }],
+                    });
+                });
+                await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
 
-            await expect(page.locator('.modal')).toHaveCount(0);
-            await expect(page.locator('.modal-backdrop')).toHaveCount(0);
-            await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
-            expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
-            expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
+                const errorPromise = page.waitForEvent('pageerror');
+                await page.getByRole('button', { name: 'Save' }).click();
+                expect((await errorPromise).message).toBe('Action failed');
+
+                await expect(page.locator('.modal')).toHaveCount(0);
+                await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+                await expect(page.locator('body')).not.toHaveClass(/\bmodal-open\b/);
+                expect(await page.evaluate((_) => window.dialog.node)).toBe(null);
+                expect(await page.evaluate((_) => window.dialog.options)).toBe(null);
+            });
         });
     });
 

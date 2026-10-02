@@ -5,8 +5,12 @@ import { addCoverageReport } from 'monocart-reporter';
 const collectCoverage = process.env.FROST_UI_DIALOG_COVERAGE === 'true';
 
 const test = base.extend({
+    expectedBrowserErrors: [[], { option: true }],
     uiPage: [
-        async ({ page }, use, testInfo) => {
+        async ({ page, expectedBrowserErrors }, use, testInfo) => {
+            const errors = [];
+            page.on('pageerror', (error) => errors.push(error.message));
+
             if (collectCoverage) {
                 await page.coverage.startJSCoverage({
                     resetOnNavigation: false,
@@ -28,6 +32,7 @@ const test = base.extend({
                     throw new Error('Failed to initialize Dialog on the test page.');
                 }
 
+                // Keep the stylesheet in the head for component layout and transitions.
                 document.body.replaceChildren();
             });
 
@@ -35,7 +40,10 @@ const test = base.extend({
                 const node = document.createElement('div');
                 node.className = 'text-center';
                 document.body.append(node);
-                const ready = getComputedStyle(node).textAlign === 'center';
+
+                const style = getComputedStyle(node);
+                const ready = style.textAlign === 'center';
+
                 node.remove();
                 return ready;
             });
@@ -46,6 +54,8 @@ const test = base.extend({
                 const coverage = await page.coverage.stopJSCoverage();
                 await addCoverageReport(coverage, testInfo);
             }
+
+            expect(errors, 'Uncaught browser errors').toEqual(expectedBrowserErrors);
         },
         { auto: true },
     ],
