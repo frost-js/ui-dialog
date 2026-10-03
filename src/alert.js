@@ -21,4 +21,4 @@ export function alert(content = '', callback = () => { }, options = {}) {
         ],
         ...options,
     });
-};
+}

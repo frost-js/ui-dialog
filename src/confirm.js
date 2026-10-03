@@ -26,4 +26,4 @@ export function confirm(content = '', callback = () => { }, options = {}) {
         ],
         ...options,
     });
-};
+}

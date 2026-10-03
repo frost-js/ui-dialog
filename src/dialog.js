@@ -315,4 +315,4 @@ export default class Dialog {
             }
         }
     }
-};
+}
