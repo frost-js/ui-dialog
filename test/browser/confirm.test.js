@@ -2,7 +2,7 @@ import { expect, test } from '#test';
 
 test.describe('confirm', () => {
     test('renders a confirm Dialog', async ({ page }) => {
-        await page.evaluate((_) => {
+        await page.evaluate(() => {
             UI.confirm('Confirm content');
         });
 
@@ -17,7 +17,7 @@ test.describe('confirm', () => {
         { button: 'OK', expected: true },
     ]) {
         test(`reports ${expected} when ${button} is selected`, async ({ page }) => {
-            await page.evaluate((_) => {
+            await page.evaluate(() => {
                 window.result = null;
                 UI.confirm('Confirm content', (result) => {
                     window.result = result;
@@ -28,12 +28,12 @@ test.describe('confirm', () => {
             await page.getByRole('button', { name: button }).click();
 
             await expect(page.locator('.modal')).toHaveCount(0);
-            expect(await page.evaluate((_) => window.result)).toBe(expected);
+            expect(await page.evaluate(() => window.result)).toBe(expected);
         });
     }
 
     test('allows options to override generated values', async ({ page }) => {
-        await page.evaluate((_) => {
+        await page.evaluate(() => {
             UI.confirm('Confirm content', () => { }, {
                 buttons: [{ text: 'Custom' }],
                 content: 'Custom content',

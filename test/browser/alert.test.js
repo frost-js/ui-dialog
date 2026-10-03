@@ -2,7 +2,7 @@ import { expect, test } from '#test';
 
 test.describe('alert', () => {
     test('renders an alert Dialog', async ({ page }) => {
-        await page.evaluate((_) => {
+        await page.evaluate(() => {
             UI.alert('Alert content');
         });
 
@@ -12,7 +12,7 @@ test.describe('alert', () => {
     });
 
     test('supports default arguments', async ({ page }) => {
-        await page.evaluate((_) => {
+        await page.evaluate(() => {
             UI.alert();
         });
         await expect(page.locator('.modal')).toHaveAttribute('aria-hidden', 'false');
@@ -27,7 +27,7 @@ test.describe('alert', () => {
         { button: 'Close', expected: 0 },
     ]) {
         test(`has callback count ${expected} after selecting ${button}`, async ({ page }) => {
-            await page.evaluate((_) => {
+            await page.evaluate(() => {
                 window.callbackCount = 0;
                 UI.alert('Alert content', () => {
                     window.callbackCount++;
@@ -38,12 +38,12 @@ test.describe('alert', () => {
             await page.getByRole('button', { name: button, exact: true }).click();
 
             await expect(page.locator('.modal')).toHaveCount(0);
-            expect(await page.evaluate((_) => window.callbackCount)).toBe(expected);
+            expect(await page.evaluate(() => window.callbackCount)).toBe(expected);
         });
     }
 
     test('allows options to override generated values', async ({ page }) => {
-        await page.evaluate((_) => {
+        await page.evaluate(() => {
             UI.alert('Alert content', () => { }, {
                 buttons: [{ text: 'Custom' }],
                 content: 'Custom content',
