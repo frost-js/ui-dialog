@@ -1,6 +1,6 @@
 {
     "name": "@fr0st/ui-dialog",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "private": false,
     "description": "Programmatic alert, confirmation, and custom modal dialogs for Frost UI.",
     "keywords": [

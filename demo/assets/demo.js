@@ -158,7 +158,7 @@ $.ready(() => {
                     content: 'Inspect the DOM to see this modal under #dialog-host.',
                 });
 
-                report(`Dialog parent: #${$.getProperty(dialog.node.parentElement, 'id')}.`);
+                report(`Dialog parent: #${$.getProperty($.parent(dialog.node), 'id')}.`);
                 break;
             }
             case 'stack': {
