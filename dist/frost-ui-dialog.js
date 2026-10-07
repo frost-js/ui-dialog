@@ -109,11 +109,11 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		#actionSelected = false;
 		#closeRequested = false;
 		/** @type {Modal|null} */
-		#modal;
+		#modal = null;
 		/** @type {HTMLElement|null} */
-		#node;
+		#node = null;
 		/** @type {Readonly<DialogOptions>|null} */
-		#options;
+		#options = null;
 		/**
 		* Creates a Dialog.
 		* @param {DialogOptions} [options] The Dialog options.

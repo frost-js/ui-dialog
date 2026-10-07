@@ -84,11 +84,11 @@ export default class Dialog {
     #actionSelected = false;
     #closeRequested = false;
     /** @type {Modal|null} */
-    #modal;
+    #modal = null;
     /** @type {HTMLElement|null} */
-    #node;
+    #node = null;
     /** @type {Readonly<DialogOptions>|null} */
-    #options;
+    #options = null;
 
     /**
      * Creates a Dialog.
