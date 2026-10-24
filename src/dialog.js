@@ -3,6 +3,8 @@
 import $ from '@fr0st/query';
 import { generateId, Modal } from '@fr0st/ui';
 
+const document = $.getContext();
+
 /** @typedef {NodeInput} DialogContent */
 
 /** @typedef {'sm'|'lg'|'xl'} DialogSize */

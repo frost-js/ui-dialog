@@ -3,6 +3,7 @@ import { Modal, generateId } from "@fr0st/ui";
 
 //#region src/dialog.js
 /** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
+var document = $.getContext();
 /** @typedef {NodeInput} DialogContent */
 /** @typedef {'sm'|'lg'|'xl'} DialogSize */
 /**
