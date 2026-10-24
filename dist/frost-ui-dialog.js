@@ -1,6 +1,6 @@
 (function(global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ?  factory(exports, require('@fr0st/query'), require('@fr0st/ui')) :
-  typeof define === 'function' && define.amd ? define(['exports', '@fr0st/query', '@fr0st/ui'], factory) :
+  typeof exports === 'object' && typeof module !== 'undefined' ?  factory(exports, require("@fr0st/query"), require("@fr0st/ui")) :
+  typeof define === 'function' && define.amd ? define(['exports', "@fr0st/query", "@fr0st/ui"], factory) :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory((global.UI = global.UI || {}), global.fQuery,global.UI));
 })(this, function(exports, _fr0st_query, _fr0st_ui) {
 Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
