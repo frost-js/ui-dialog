@@ -3,12 +3,8 @@ import { Modal, generateId } from "@fr0st/ui";
 
 //#region src/dialog.js
 /** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
-/**
-* @typedef {NodeInput} DialogContent
-*/
-/**
-* @typedef {'sm'|'lg'|'xl'} DialogSize
-*/
+/** @typedef {NodeInput} DialogContent */
+/** @typedef {'sm'|'lg'|'xl'} DialogSize */
 /**
 * @callback DialogCallback
 * @returns {void} Nothing.

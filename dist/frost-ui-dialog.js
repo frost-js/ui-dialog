@@ -35,12 +35,8 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 
 //#region src/dialog.js
 /** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
-	/**
-	* @typedef {NodeInput} DialogContent
-	*/
-	/**
-	* @typedef {'sm'|'lg'|'xl'} DialogSize
-	*/
+	/** @typedef {NodeInput} DialogContent */
+	/** @typedef {'sm'|'lg'|'xl'} DialogSize */
 	/**
 	* @callback DialogCallback
 	* @returns {void} Nothing.

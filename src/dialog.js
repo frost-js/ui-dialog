@@ -3,13 +3,9 @@
 import $ from '@fr0st/query';
 import { generateId, Modal } from '@fr0st/ui';
 
-/**
- * @typedef {NodeInput} DialogContent
- */
+/** @typedef {NodeInput} DialogContent */
 
-/**
- * @typedef {'sm'|'lg'|'xl'} DialogSize
- */
+/** @typedef {'sm'|'lg'|'xl'} DialogSize */
 
 /**
  * @callback DialogCallback
