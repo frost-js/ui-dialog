@@ -1,5 +1,5 @@
 const $ = globalThis.fQuery;
-const UI = globalThis.UI;
+const { alert, confirm, Dialog } = globalThis.UI;
 const themeKey = 'frostui-dialog-demo-theme';
 
 const setTheme = (theme) => {
@@ -50,21 +50,21 @@ $.ready(() => {
 
         switch (action) {
             case 'alert':
-                UI.alert(
+                alert(
                     'This alert reports only when OK is selected.',
                     () => report('Alert: OK selected.'),
                     { title: 'Saved successfully' },
                 );
                 break;
             case 'confirm':
-                UI.confirm(
+                confirm(
                     'Would you like to publish these changes?',
                     (confirmed) => report(`Confirm: ${confirmed}.`),
                     { title: 'Publish changes' },
                 );
                 break;
             case 'custom':
-                new UI.Dialog({
+                new Dialog({
                     title: 'Move project',
                     content: 'Choose where this project should go.',
                     buttons: [
@@ -93,7 +93,7 @@ $.ready(() => {
 
                 $.append(content, [message, badge]);
 
-                new UI.Dialog({
+                new Dialog({
                     title: 'Trusted rich content',
                     content,
                     buttons: [
@@ -107,14 +107,14 @@ $.ready(() => {
                 break;
             }
             case 'backdrop-static':
-                new UI.Dialog({
+                new Dialog({
                     title: 'Static backdrop',
                     content: 'Backdrop clicks and Escape keep this dialog open. Use the close button.',
                 });
                 report('Opened a dialog with the default static backdrop.');
                 break;
             case 'backdrop-dismiss':
-                new UI.Dialog({
+                new Dialog({
                     title: 'Dismissible backdrop',
                     content: 'Select the backdrop outside this dialog to close it.',
                     backdrop: true,
@@ -123,7 +123,7 @@ $.ready(() => {
                 report('Opened a dialog with a dismissible backdrop.');
                 break;
             case 'backdrop-none':
-                new UI.Dialog({
+                new Dialog({
                     title: 'No backdrop',
                     content: 'The page remains visible without a backdrop layer.',
                     backdrop: false,
@@ -131,7 +131,7 @@ $.ready(() => {
                 report('Opened a dialog without a backdrop.');
                 break;
             case 'centered':
-                new UI.Dialog({
+                new Dialog({
                     title: 'Vertically centered',
                     content: 'This dialog uses centerVertical: true.',
                     centerVertical: true,
@@ -143,7 +143,7 @@ $.ready(() => {
             case 'size-xl': {
                 const size = action.slice(5);
 
-                new UI.Dialog({
+                new Dialog({
                     title: `${size.toUpperCase()} dialog`,
                     content: `This dialog uses size: '${size}'.`,
                     size,
@@ -152,7 +152,7 @@ $.ready(() => {
                 break;
             }
             case 'append': {
-                const dialog = new UI.Dialog({
+                const dialog = new Dialog({
                     appendTo: $('#dialog-host'),
                     title: 'Custom append target',
                     content: 'Inspect the DOM to see this modal under #dialog-host.',
@@ -173,7 +173,7 @@ $.ready(() => {
                 });
 
                 $.addEvent(openNext, 'click', () => {
-                    new UI.Dialog({
+                    new Dialog({
                         title: 'Second layer',
                         content: 'Close this dialog to return to the first layer.',
                         centerVertical: true,
@@ -182,7 +182,7 @@ $.ready(() => {
                 });
                 $.append(content, [message, openNext]);
 
-                new UI.Dialog({
+                new Dialog({
                     title: 'First layer',
                     content,
                     size: 'lg',
