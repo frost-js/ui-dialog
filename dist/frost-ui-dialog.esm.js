@@ -1,7 +1,7 @@
 import $ from "@fr0st/query";
 import { Modal, generateId } from "@fr0st/ui";
 
-//#region src/dialog.js
+// src/dialog.js
 /** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
 var document = $.getContext();
 /** @typedef {NodeInput} DialogContent */
@@ -229,8 +229,7 @@ var Dialog = class {
 	}
 };
 
-//#endregion
-//#region src/alert.js
+// src/alert.js
 /** @import { DialogCallback, DialogContent, DialogOptions } from './dialog.js'; */
 /**
 * Renders an alert Dialog.
@@ -251,8 +250,7 @@ function alert(content = "", callback = () => {}, options = {}) {
 	});
 }
 
-//#endregion
-//#region src/confirm.js
+// src/confirm.js
 /** @import { ConfirmCallback, DialogContent, DialogOptions } from './dialog.js'; */
 /**
 * Renders a confirm Dialog.
@@ -277,6 +275,5 @@ function confirm(content = "", callback = () => {}, options = {}) {
 	});
 }
 
-//#endregion
 export { Dialog, alert, confirm };
 //# sourceMappingURL=frost-ui-dialog.esm.js.map

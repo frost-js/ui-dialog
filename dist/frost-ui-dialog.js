@@ -4,7 +4,7 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory((global.UI = global.UI || {}), global.fQuery,global.UI));
 })(this, function(exports, _fr0st_query, _fr0st_ui) {
 Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-//#region \0rolldown/runtime.js
+// \0rolldown/runtime.js
 	var __create = Object.create;
 	var __defProp = Object.defineProperty;
 	var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -30,10 +30,9 @@ Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 		enumerable: true
 	}) : target, mod));
 
-//#endregion
 _fr0st_query = __toESM(_fr0st_query, 1);
 
-//#region src/dialog.js
+// src/dialog.js
 /** @import { NodeInput } from '@fr0st/query/src/helpers.js'; */
 	var document = _fr0st_query.default.getContext();
 	/** @typedef {NodeInput} DialogContent */
@@ -261,8 +260,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		}
 	};
 
-//#endregion
-//#region src/alert.js
+// src/alert.js
 /** @import { DialogCallback, DialogContent, DialogOptions } from './dialog.js'; */
 	/**
 	* Renders an alert Dialog.
@@ -283,8 +281,7 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		});
 	}
 
-//#endregion
-//#region src/confirm.js
+// src/confirm.js
 /** @import { ConfirmCallback, DialogContent, DialogOptions } from './dialog.js'; */
 	/**
 	* Renders a confirm Dialog.
@@ -309,7 +306,6 @@ _fr0st_query = __toESM(_fr0st_query, 1);
 		});
 	}
 
-//#endregion
 exports.Dialog = Dialog;
 exports.alert = alert;
 exports.confirm = confirm;
